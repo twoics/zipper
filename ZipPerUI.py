@@ -1,5 +1,5 @@
+"""This module is the UI of the application, all the main widgets are located here."""
 import os
-
 from PyQt5 import Qt
 from PyQt5.QtCore import QSize
 from PyQt5 import QtCore, QtGui, QtWidgets

@@ -1,5 +1,5 @@
+"""This module is the entry point, and represents the application logic"""
 import sys
-
 from fbs_runtime.application_context.PyQt5 import ApplicationContext
 from PyQt5 import Qt
 from PyQt5.QtWidgets import QMainWindow
