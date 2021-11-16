@@ -3,13 +3,13 @@
 block_cipher = None
 
 
-a = Analysis(['D:\\PyProjects\\ZipPer\\src\\main\\python\\main.py'],
-             pathex=['D:\\PyProjects\\ZipPer\\target\\PyInstaller'],
+a = Analysis(['C:\\PyProject\\ZipPer\\src\\main\\python\\main.py'],
+             pathex=['C:\\PyProject\\ZipPer\\target\\PyInstaller'],
              binaries=[],
              datas=[],
              hiddenimports=[],
-             hookspath=['D:\\PyProjects\\ZipPer\\lib\\site-packages\\fbs\\freeze\\hooks'],
-             runtime_hooks=['D:\\PyProjects\\ZipPer\\target\\PyInstaller\\fbs_pyinstaller_hook.py'],
+             hookspath=['c:\\pyproject\\zipper\\venv\\lib\\site-packages\\fbs\\freeze\\hooks'],
+             runtime_hooks=['C:\\PyProject\\ZipPer\\target\\PyInstaller\\fbs_pyinstaller_hook.py'],
              excludes=[],
              win_no_prefer_redirects=False,
              win_private_assemblies=False,
@@ -26,7 +26,7 @@ exe = EXE(pyz,
           bootloader_ignore_signals=False,
           strip=False,
           upx=False,
-          console=False , version='D:\\PyProjects\\ZipPer\\target\\PyInstaller\\version_info.py', icon='D:\\PyProjects\\ZipPer\\src\\main\\icons\\Icon.ico')
+          console=False , version='C:\\PyProject\\ZipPer\\target\\PyInstaller\\version_info.py', icon='C:\\PyProject\\ZipPer\\src\\main\\icons\\Icon.ico')
 coll = COLLECT(exe,
                a.binaries,
                a.zipfiles,
