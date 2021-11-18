@@ -3,7 +3,9 @@ import os
 from PyQt5 import Qt
 from PyQt5.QtCore import QSize
 from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtWidgets import QWidget, QHBoxLayout, QLabel, QFileIconProvider, QListWidget, QVBoxLayout, QListWidgetItem
+from PyQt5.QtWidgets import QWidget, QHBoxLayout, QLabel, QFileIconProvider, QListWidget, QVBoxLayout, \
+    QListWidgetItem, QFileDialog
+from PyQt5.QtWidgets import QMainWindow
 
 import ZipPerIcons
 
@@ -17,24 +19,84 @@ CLOSE_BUTTON_HOVER = [255, 94, 91]
 MAIN_BODY_BACKGROUND = [173, 181, 189]
 
 
-class Ui_MainWindow(object):
+class UiZipPer(QMainWindow):
     """Main UI"""
 
-    def setup_ui(self, MainWindow):
-        MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(954, 643)
-        self.centralwidget = QtWidgets.QWidget(MainWindow)
-        self.centralwidget.setStyleSheet(f"background-color: rgb({MAIN_BACKGROUND_COLOR[0]}, "
-                                         f"{MAIN_BACKGROUND_COLOR[1]}, {MAIN_BACKGROUND_COLOR[2]});")
-        self.centralwidget.setObjectName("centralwidget")
-        self.verticalLayout = QtWidgets.QVBoxLayout(self.centralwidget)
-        self.verticalLayout.setContentsMargins(0, 0, 0, 0)
-        self.verticalLayout.setSpacing(0)
-        self.verticalLayout.setObjectName("verticalLayout")
-        self.appBar = QtWidgets.QFrame(self.centralwidget)
-        self.appBar.setMinimumSize(QtCore.QSize(0, 70))
-        self.appBar.setMaximumSize(QtCore.QSize(16777215, 70))
-        self.appBar.setStyleSheet("QPushButton{"
+    def __init__(self):
+        QMainWindow.__init__(self, parent=None)
+        self._central_widget = QtWidgets.QWidget(self)
+        self._verticalLayout = QtWidgets.QVBoxLayout(self._central_widget)
+        self._appBar = QtWidgets.QFrame(self._central_widget)
+        self._horizontalLayout = QtWidgets.QHBoxLayout(self._appBar)
+        self._topLeftButton = QtWidgets.QFrame(self._appBar)
+        self._horizontalLayout_5 = QtWidgets.QHBoxLayout(self._topLeftButton)
+        self._backButton = QtWidgets.QPushButton(self._topLeftButton)
+        self._appName = QtWidgets.QFrame(self._appBar)
+        self._horizontalLayout_6 = QtWidgets.QHBoxLayout(self._appName)
+        self._name = QtWidgets.QLabel(self._appName)
+        self._icon = QtWidgets.QLabel(self._appName)
+        self._topRightButtons = QtWidgets.QFrame(self._appBar)
+        self._horizontalLayout_4 = QtWidgets.QHBoxLayout(self._topRightButtons)
+        self._minimizeButton = QtWidgets.QPushButton(self._topRightButtons)
+        self._maximizeButton = QtWidgets.QPushButton(self._topRightButtons)
+        self._closeButton = QtWidgets.QPushButton(self._topRightButtons)
+        self._mainBody = QtWidgets.QFrame(self._central_widget)
+        self._horizontalLayout_2 = QtWidgets.QHBoxLayout(self._mainBody)
+        self._stackedWidget = QtWidgets.QStackedWidget(self._mainBody)
+        self._optionButtons = QtWidgets.QWidget()
+        self._verticalLayout_3 = QtWidgets.QVBoxLayout(self._optionButtons)
+        self._buttons = QtWidgets.QFrame(self._optionButtons)
+        self._gridLayout = QtWidgets.QGridLayout(self._buttons)
+        self._rarPack = QtWidgets.QPushButton(self._buttons)
+        self._zipPack = QtWidgets.QPushButton(self._buttons)
+        self._unpack = QtWidgets.QPushButton(self._buttons)
+        self._convert = QtWidgets.QPushButton(self._buttons)
+        self._bottomBar = QtWidgets.QFrame(self._optionButtons)
+        self._horizontalLayout_7 = QtWidgets.QHBoxLayout(self._bottomBar)
+        self._infoResources = QtWidgets.QPushButton(self._bottomBar)
+        self._changeTheme = QtWidgets.QPushButton(self._bottomBar)
+        self._convertor = QtWidgets.QWidget()
+        self._verticalLayout_2 = QtWidgets.QVBoxLayout(self._convertor)
+        self._convertor_windows = QtWidgets.QStackedWidget(self._convertor)
+        self._main_list = _QList()
+        self._helper_window = _HelperPage()
+        self._bottom = QtWidgets.QFrame(self._convertor)
+        self._horizontalLayout_3 = QtWidgets.QHBoxLayout(self._bottom)
+        self._addFile = QtWidgets.QPushButton(self._bottom)
+        self._generate = QtWidgets.QPushButton(self._bottom)
+        self._delFile = QtWidgets.QPushButton(self._bottom)
+
+        # Slots
+        self._create_slots()
+
+        # Create UI
+        self._setup_ui(self)
+
+    def _create_slots(self):
+        self._helper_window.on_dragging.connect(self._set_main_convertor)
+        self._main_list.added_file.connect(self._update_window)
+
+        self._rarPack.clicked.connect(self._open_convertor_page)
+        self._zipPack.clicked.connect(self._open_convertor_page)
+        self._unpack.clicked.connect(self._open_convertor_page)
+        self._convert.clicked.connect(self._open_convertor_page)
+        self._backButton.clicked.connect(self._open_main_page)
+
+        self._addFile.clicked.connect(lambda: self._main_list.add_file(QFileDialog.getOpenFileName()[0]))
+        self._delFile.clicked.connect(lambda: self._main_list.delete_file())
+
+    def _setup_ui(self, main_window):
+        main_window.setObjectName("MainWindow")
+        main_window.resize(954, 643)
+        self._central_widget.setStyleSheet(f"background-color: rgb({MAIN_BACKGROUND_COLOR[0]}, "
+                                          f"{MAIN_BACKGROUND_COLOR[1]}, {MAIN_BACKGROUND_COLOR[2]});")
+        self._central_widget.setObjectName("centralwidget")
+        self._verticalLayout.setContentsMargins(0, 0, 0, 0)
+        self._verticalLayout.setSpacing(0)
+        self._verticalLayout.setObjectName("verticalLayout")
+        self._appBar.setMinimumSize(QtCore.QSize(0, 70))
+        self._appBar.setMaximumSize(QtCore.QSize(16777215, 70))
+        self._appBar.setStyleSheet("QPushButton{"
                                   f"background-color: rgb({BUTTON_COLOR[0]}, {BUTTON_COLOR[1]}, {BUTTON_COLOR[2]});"
                                   "    border-radius: 15;"
                                   "}"
@@ -43,60 +105,51 @@ class Ui_MainWindow(object):
                                   f"    background-color: rgb({BUTTON_HOVER[0]}, {BUTTON_HOVER[1]}, {BUTTON_HOVER[2]});"
                                   "}")
 
-        self.appBar.setFrameShape(QtWidgets.QFrame.StyledPanel)
-        self.appBar.setFrameShadow(QtWidgets.QFrame.Raised)
-        self.appBar.setObjectName("appBar")
-        self.horizontalLayout = QtWidgets.QHBoxLayout(self.appBar)
-        self.horizontalLayout.setContentsMargins(0, 0, 0, 0)
-        self.horizontalLayout.setSpacing(0)
-        self.horizontalLayout.setObjectName("horizontalLayout")
-        self.topLeftButton = QtWidgets.QFrame(self.appBar)
-        self.topLeftButton.setMinimumSize(QtCore.QSize(100, 0))
-        self.topLeftButton.setMaximumSize(QtCore.QSize(100, 16777215))
-        self.topLeftButton.setStyleSheet("")
-        self.topLeftButton.setFrameShape(QtWidgets.QFrame.StyledPanel)
-        self.topLeftButton.setFrameShadow(QtWidgets.QFrame.Raised)
-        self.topLeftButton.setObjectName("topLeftButton")
-        self.horizontalLayout_5 = QtWidgets.QHBoxLayout(self.topLeftButton)
-        self.horizontalLayout_5.setContentsMargins(0, 0, 0, 0)
-        self.horizontalLayout_5.setSpacing(0)
-        self.horizontalLayout_5.setObjectName("horizontalLayout_5")
-        self.pushButton = QtWidgets.QPushButton(self.topLeftButton)
-        self.pushButton.setMinimumSize(QtCore.QSize(0, 65))
-        self.pushButton.setText("")
+        self._appBar.setFrameShape(QtWidgets.QFrame.StyledPanel)
+        self._appBar.setFrameShadow(QtWidgets.QFrame.Raised)
+        self._appBar.setObjectName("appBar")
+        self._horizontalLayout.setContentsMargins(0, 0, 0, 0)
+        self._horizontalLayout.setSpacing(0)
+        self._horizontalLayout.setObjectName("horizontalLayout")
+        self._topLeftButton.setMinimumSize(QtCore.QSize(100, 0))
+        self._topLeftButton.setMaximumSize(QtCore.QSize(100, 16777215))
+        self._topLeftButton.setStyleSheet("")
+        self._topLeftButton.setFrameShape(QtWidgets.QFrame.StyledPanel)
+        self._topLeftButton.setFrameShadow(QtWidgets.QFrame.Raised)
+        self._topLeftButton.setObjectName("topLeftButton")
+        self._horizontalLayout_5.setContentsMargins(0, 0, 0, 0)
+        self._horizontalLayout_5.setSpacing(0)
+        self._horizontalLayout_5.setObjectName("horizontalLayout_5")
+        self._backButton.setMinimumSize(QtCore.QSize(0, 65))
+        self._backButton.setText("")
         icon = QtGui.QIcon()
         icon.addPixmap(QtGui.QPixmap(":/newPrefix/ZipPerIcons/icons8-menu-32.png"), Qt.QIcon.Normal, Qt.QIcon.Off)
-        self.pushButton.setIcon(icon)
-        self.pushButton.setIconSize(QtCore.QSize(24, 24))
-        self.pushButton.setObjectName("pushButton")
-        self.horizontalLayout_5.addWidget(self.pushButton)
-        self.horizontalLayout.addWidget(self.topLeftButton, 0, Qt.Qt.AlignLeft)
-        self.appName = QtWidgets.QFrame(self.appBar)
-        self.appName.setMinimumSize(QtCore.QSize(250, 0))
-        self.appName.setMaximumSize(QtCore.QSize(250, 16777215))
-        self.appName.setStyleSheet("")
-        self.appName.setFrameShape(QtWidgets.QFrame.StyledPanel)
-        self.appName.setFrameShadow(QtWidgets.QFrame.Raised)
-        self.appName.setObjectName("appName")
-        self.horizontalLayout_6 = QtWidgets.QHBoxLayout(self.appName)
-        self.horizontalLayout_6.setObjectName("horizontalLayout_6")
-        self.name = QtWidgets.QLabel(self.appName)
+        self._backButton.setIcon(icon)
+        self._backButton.setIconSize(QtCore.QSize(24, 24))
+        self._backButton.setObjectName("pushButton")
+        self._horizontalLayout_5.addWidget(self._backButton)
+        self._horizontalLayout.addWidget(self._topLeftButton, 0, Qt.Qt.AlignLeft)
+        self._appName.setMinimumSize(QtCore.QSize(250, 0))
+        self._appName.setMaximumSize(QtCore.QSize(250, 16777215))
+        self._appName.setStyleSheet("")
+        self._appName.setFrameShape(QtWidgets.QFrame.StyledPanel)
+        self._appName.setFrameShadow(QtWidgets.QFrame.Raised)
+        self._appName.setObjectName("appName")
+        self._horizontalLayout_6.setObjectName("horizontalLayout_6")
         font = QtGui.QFont()
         font.setPointSize(16)
-        self.name.setFont(font)
-        self.name.setStyleSheet("")
-        self.name.setObjectName("name")
-        self.horizontalLayout_6.addWidget(self.name, 0, Qt.Qt.AlignRight)
-        self.icon = QtWidgets.QLabel(self.appName)
-        self.icon.setText("")
-        self.icon.setPixmap(QtGui.QPixmap(":/newPrefix/ZipPerIcons/icons8-create-32.png"))
-        self.icon.setObjectName("icon")
-        self.horizontalLayout_6.addWidget(self.icon)
-        self.horizontalLayout.addWidget(self.appName)
-        self.topRightButtons = QtWidgets.QFrame(self.appBar)
-        self.topRightButtons.setMinimumSize(QtCore.QSize(80, 0))
-        self.topRightButtons.setMaximumSize(QtCore.QSize(150, 16777215))
-        self.topRightButtons.setStyleSheet("QPushButton{"
+        self._name.setFont(font)
+        self._name.setStyleSheet("")
+        self._name.setObjectName("name")
+        self._horizontalLayout_6.addWidget(self._name, 0, Qt.Qt.AlignRight)
+        self._icon.setText("")
+        self._icon.setPixmap(QtGui.QPixmap(":/newPrefix/ZipPerIcons/icons8-create-32.png"))
+        self._icon.setObjectName("icon")
+        self._horizontalLayout_6.addWidget(self._icon)
+        self._horizontalLayout.addWidget(self._appName)
+        self._topRightButtons.setMinimumSize(QtCore.QSize(80, 0))
+        self._topRightButtons.setMaximumSize(QtCore.QSize(150, 16777215))
+        self._topRightButtons.setStyleSheet("QPushButton{"
                                            "        border-radius: 5;"
                                            f"        background-color: rgb({TOP_RIGHT_BACKGROUND[0]}, "
                                            f"{TOP_RIGHT_BACKGROUND[1]}, {TOP_RIGHT_BACKGROUND[2]});"
@@ -106,31 +159,27 @@ class Ui_MainWindow(object):
                                            f"        background-color : rgb({TOP_RIGHT_HOVER[0]}, {TOP_RIGHT_HOVER[1]},"
                                            f" {TOP_RIGHT_HOVER[2]});"
                                            "}")
-        self.topRightButtons.setFrameShape(QtWidgets.QFrame.StyledPanel)
-        self.topRightButtons.setFrameShadow(QtWidgets.QFrame.Raised)
-        self.topRightButtons.setObjectName("topRightButtons")
-        self.horizontalLayout_4 = QtWidgets.QHBoxLayout(self.topRightButtons)
-        self.horizontalLayout_4.setObjectName("horizontalLayout_4")
-        self.minimazeButton = QtWidgets.QPushButton(self.topRightButtons)
-        self.minimazeButton.setText("")
+        self._topRightButtons.setFrameShape(QtWidgets.QFrame.StyledPanel)
+        self._topRightButtons.setFrameShadow(QtWidgets.QFrame.Raised)
+        self._topRightButtons.setObjectName("topRightButtons")
+        self._horizontalLayout_4.setObjectName("horizontalLayout_4")
+        self._minimizeButton.setText("")
         icon1 = QtGui.QIcon()
         icon1.addPixmap(QtGui.QPixmap(":/newPrefix/ZipPerIcons/icons8-minimize-window-32.png"), Qt.QIcon.Normal,
                         Qt.QIcon.Off)
-        self.minimazeButton.setIcon(icon1)
-        self.minimazeButton.setIconSize(QtCore.QSize(24, 24))
-        self.minimazeButton.setObjectName("minimazeButton")
-        self.horizontalLayout_4.addWidget(self.minimazeButton)
-        self.maximazeButton = QtWidgets.QPushButton(self.topRightButtons)
-        self.maximazeButton.setText("")
+        self._minimizeButton.setIcon(icon1)
+        self._minimizeButton.setIconSize(QtCore.QSize(24, 24))
+        self._minimizeButton.setObjectName("minimazeButton")
+        self._horizontalLayout_4.addWidget(self._minimizeButton)
+        self._maximizeButton.setText("")
         icon2 = QtGui.QIcon()
         icon2.addPixmap(QtGui.QPixmap(":/newPrefix/ZipPerIcons/icons8-maximize-window-32.png"), Qt.QIcon.Normal,
                         Qt.QIcon.Off)
-        self.maximazeButton.setIcon(icon2)
-        self.maximazeButton.setIconSize(QtCore.QSize(24, 24))
-        self.maximazeButton.setObjectName("maximazeButton")
-        self.horizontalLayout_4.addWidget(self.maximazeButton)
-        self.closeButton = QtWidgets.QPushButton(self.topRightButtons)
-        self.closeButton.setStyleSheet("QPushButton{"
+        self._maximizeButton.setIcon(icon2)
+        self._maximizeButton.setIconSize(QtCore.QSize(24, 24))
+        self._maximizeButton.setObjectName("maximazeButton")
+        self._horizontalLayout_4.addWidget(self._maximizeButton)
+        self._closeButton.setStyleSheet("QPushButton{"
                                        "        border-radius: 5;"
                                        f"        background-color: rgb({TOP_RIGHT_BACKGROUND[0]}, "
                                        f"{TOP_RIGHT_BACKGROUND[1]}, {TOP_RIGHT_BACKGROUND[2]});"
@@ -140,29 +189,26 @@ class Ui_MainWindow(object):
                                        f"    background-color: rgb({CLOSE_BUTTON_HOVER[0]}, {CLOSE_BUTTON_HOVER[1]},"
                                        f" {CLOSE_BUTTON_HOVER[2]});"
                                        "}")
-        self.closeButton.setText("")
+        self._closeButton.setText("")
         icon3 = QtGui.QIcon()
         icon3.addPixmap(QtGui.QPixmap(":/newPrefix/ZipPerIcons/icons8-close-window-32.png"), Qt.QIcon.Normal,
                         Qt.QIcon.Off)
-        self.closeButton.setIcon(icon3)
-        self.closeButton.setIconSize(QtCore.QSize(24, 24))
-        self.closeButton.setObjectName("closeButton")
-        self.horizontalLayout_4.addWidget(self.closeButton)
-        self.horizontalLayout.addWidget(self.topRightButtons, 0, Qt.Qt.AlignRight)
-        self.verticalLayout.addWidget(self.appBar)
-        self.mainBody = QtWidgets.QFrame(self.centralwidget)
-        self.mainBody.setMinimumSize(QtCore.QSize(0, 0))
-        self.mainBody.setStyleSheet(f"background-color: rgb({MAIN_BODY_BACKGROUND[0]}, "
+        self._closeButton.setIcon(icon3)
+        self._closeButton.setIconSize(QtCore.QSize(24, 24))
+        self._closeButton.setObjectName("closeButton")
+        self._horizontalLayout_4.addWidget(self._closeButton)
+        self._horizontalLayout.addWidget(self._topRightButtons, 0, Qt.Qt.AlignRight)
+        self._verticalLayout.addWidget(self._appBar)
+        self._mainBody.setMinimumSize(QtCore.QSize(0, 0))
+        self._mainBody.setStyleSheet(f"background-color: rgb({MAIN_BODY_BACKGROUND[0]}, "
                                     f"{MAIN_BODY_BACKGROUND[1]}, {MAIN_BODY_BACKGROUND[2]});")
-        self.mainBody.setFrameShape(QtWidgets.QFrame.StyledPanel)
-        self.mainBody.setFrameShadow(QtWidgets.QFrame.Raised)
-        self.mainBody.setObjectName("mainBody")
-        self.horizontalLayout_2 = QtWidgets.QHBoxLayout(self.mainBody)
-        self.horizontalLayout_2.setContentsMargins(0, 0, 0, 0)
-        self.horizontalLayout_2.setSpacing(0)
-        self.horizontalLayout_2.setObjectName("horizontalLayout_2")
-        self.stackedWidget = QtWidgets.QStackedWidget(self.mainBody)
-        self.stackedWidget.setStyleSheet("QPushButton{"
+        self._mainBody.setFrameShape(QtWidgets.QFrame.StyledPanel)
+        self._mainBody.setFrameShadow(QtWidgets.QFrame.Raised)
+        self._mainBody.setObjectName("mainBody")
+        self._horizontalLayout_2.setContentsMargins(0, 0, 0, 0)
+        self._horizontalLayout_2.setSpacing(0)
+        self._horizontalLayout_2.setObjectName("horizontalLayout_2")
+        self._stackedWidget.setStyleSheet("QPushButton{"
                                          f"    background-color: rgb({BUTTON_COLOR[0]}, "
                                          f"{BUTTON_COLOR[1]}, {BUTTON_COLOR[2]});"
                                          "    border-radius: 15;"
@@ -172,206 +218,192 @@ class Ui_MainWindow(object):
                                          f"    background-color: rgb({BUTTON_HOVER[0]}, {BUTTON_HOVER[1]},"
                                          f" {BUTTON_HOVER[2]});"
                                          "}")
-        self.stackedWidget.setObjectName("stackedWidget")
-        self.optionButtons = QtWidgets.QWidget()
-        self.optionButtons.setStyleSheet("")
-        self.optionButtons.setObjectName("optionButtons")
-        self.verticalLayout_3 = QtWidgets.QVBoxLayout(self.optionButtons)
-        self.verticalLayout_3.setContentsMargins(0, 0, 0, 0)
-        self.verticalLayout_3.setSpacing(0)
-        self.verticalLayout_3.setObjectName("verticalLayout_3")
-        self.buttons = QtWidgets.QFrame(self.optionButtons)
-        self.buttons.setFrameShape(QtWidgets.QFrame.StyledPanel)
-        self.buttons.setFrameShadow(QtWidgets.QFrame.Raised)
-        self.buttons.setObjectName("buttons")
-        self.gridLayout = QtWidgets.QGridLayout(self.buttons)
-        self.gridLayout.setContentsMargins(0, 0, 0, 0)
-        self.gridLayout.setHorizontalSpacing(0)
-        self.gridLayout.setVerticalSpacing(6)
-        self.gridLayout.setObjectName("gridLayout")
-        self.rarPack = QtWidgets.QPushButton(self.buttons)
-        self.rarPack.setMinimumSize(QtCore.QSize(150, 150))
-        self.rarPack.setMaximumSize(QtCore.QSize(150, 150))
+        self._stackedWidget.setObjectName("stackedWidget")
+        self._optionButtons.setStyleSheet("")
+        self._optionButtons.setObjectName("optionButtons")
+        self._verticalLayout_3.setContentsMargins(0, 0, 0, 0)
+        self._verticalLayout_3.setSpacing(0)
+        self._verticalLayout_3.setObjectName("verticalLayout_3")
+        self._buttons.setFrameShape(QtWidgets.QFrame.StyledPanel)
+        self._buttons.setFrameShadow(QtWidgets.QFrame.Raised)
+        self._buttons.setObjectName("buttons")
+        self._gridLayout.setContentsMargins(0, 0, 0, 0)
+        self._gridLayout.setHorizontalSpacing(0)
+        self._gridLayout.setVerticalSpacing(6)
+        self._gridLayout.setObjectName("gridLayout")
+        self._rarPack.setMinimumSize(QtCore.QSize(150, 150))
+        self._rarPack.setMaximumSize(QtCore.QSize(150, 150))
         font = QtGui.QFont()
         font.setPointSize(10)
-        self.rarPack.setFont(font)
-        self.rarPack.setStyleSheet("")
+        self._rarPack.setFont(font)
+        self._rarPack.setStyleSheet("")
         icon4 = QtGui.QIcon()
         icon4.addPixmap(QtGui.QPixmap(":/newPrefix/ZipPerIcons/icons8-rar-32.png"), Qt.QIcon.Normal, Qt.QIcon.Off)
-        self.rarPack.setIcon(icon4)
-        self.rarPack.setIconSize(QtCore.QSize(32, 32))
-        self.rarPack.setObjectName("rarPack")
-        self.gridLayout.addWidget(self.rarPack, 0, 0, 1, 1)
-        self.zipPack = QtWidgets.QPushButton(self.buttons)
-        self.zipPack.setMinimumSize(QtCore.QSize(150, 150))
-        self.zipPack.setMaximumSize(QtCore.QSize(150, 150))
+        self._rarPack.setIcon(icon4)
+        self._rarPack.setIconSize(QtCore.QSize(32, 32))
+        self._rarPack.setObjectName("rarPack")
+        self._gridLayout.addWidget(self._rarPack, 0, 0, 1, 1)
+        self._zipPack.setMinimumSize(QtCore.QSize(150, 150))
+        self._zipPack.setMaximumSize(QtCore.QSize(150, 150))
         font = QtGui.QFont()
         font.setPointSize(10)
-        self.zipPack.setFont(font)
-        self.zipPack.setStyleSheet("")
+        self._zipPack.setFont(font)
+        self._zipPack.setStyleSheet("")
         icon5 = QtGui.QIcon()
         icon5.addPixmap(QtGui.QPixmap(":/newPrefix/ZipPerIcons/icons8-zip-32.png"), Qt.QIcon.Normal, Qt.QIcon.Off)
-        self.zipPack.setIcon(icon5)
-        self.zipPack.setIconSize(QtCore.QSize(32, 32))
-        self.zipPack.setObjectName("zipPack")
-        self.gridLayout.addWidget(self.zipPack, 0, 1, 1, 1)
-        self.unpack = QtWidgets.QPushButton(self.buttons)
-        self.unpack.setMinimumSize(QtCore.QSize(150, 150))
-        self.unpack.setMaximumSize(QtCore.QSize(150, 150))
+        self._zipPack.setIcon(icon5)
+        self._zipPack.setIconSize(QtCore.QSize(32, 32))
+        self._zipPack.setObjectName("zipPack")
+        self._gridLayout.addWidget(self._zipPack, 0, 1, 1, 1)
+        self._unpack.setMinimumSize(QtCore.QSize(150, 150))
+        self._unpack.setMaximumSize(QtCore.QSize(150, 150))
         font = QtGui.QFont()
         font.setPointSize(10)
-        self.unpack.setFont(font)
-        self.unpack.setStyleSheet("")
+        self._unpack.setFont(font)
+        self._unpack.setStyleSheet("")
         icon6 = QtGui.QIcon()
         icon6.addPixmap(QtGui.QPixmap(":/newPrefix/ZipPerIcons/icons8-unpacking-32.png"), Qt.QIcon.Normal,
                         Qt.QIcon.Off)
-        self.unpack.setIcon(icon6)
-        self.unpack.setIconSize(QtCore.QSize(32, 32))
-        self.unpack.setObjectName("unpack")
-        self.gridLayout.addWidget(self.unpack, 1, 0, 1, 1)
-        self.convert = QtWidgets.QPushButton(self.buttons)
-        self.convert.setMinimumSize(QtCore.QSize(150, 150))
-        self.convert.setMaximumSize(QtCore.QSize(150, 150))
+        self._unpack.setIcon(icon6)
+        self._unpack.setIconSize(QtCore.QSize(32, 32))
+        self._unpack.setObjectName("unpack")
+        self._gridLayout.addWidget(self._unpack, 1, 0, 1, 1)
+        self._convert.setMinimumSize(QtCore.QSize(150, 150))
+        self._convert.setMaximumSize(QtCore.QSize(150, 150))
         font = QtGui.QFont()
         font.setPointSize(10)
-        self.convert.setFont(font)
-        self.convert.setStyleSheet("")
+        self._convert.setFont(font)
+        self._convert.setStyleSheet("")
         icon7 = QtGui.QIcon()
         icon7.addPixmap(QtGui.QPixmap(":/newPrefix/ZipPerIcons/icons8-export-pdf-32.png"), Qt.QIcon.Normal,
                         Qt.QIcon.Off)
-        self.convert.setIcon(icon7)
-        self.convert.setIconSize(QtCore.QSize(32, 32))
-        self.convert.setObjectName("convert")
-        self.gridLayout.addWidget(self.convert, 1, 1, 1, 1)
-        self.verticalLayout_3.addWidget(self.buttons)
-        self.bottomBar = QtWidgets.QFrame(self.optionButtons)
-        self.bottomBar.setMinimumSize(QtCore.QSize(0, 60))
-        self.bottomBar.setMaximumSize(QtCore.QSize(16777215, 60))
-        self.bottomBar.setFrameShape(QtWidgets.QFrame.StyledPanel)
-        self.bottomBar.setFrameShadow(QtWidgets.QFrame.Raised)
-        self.bottomBar.setObjectName("bottomBar")
-        self.horizontalLayout_7 = QtWidgets.QHBoxLayout(self.bottomBar)
-        self.horizontalLayout_7.setObjectName("horizontalLayout_7")
-        self.changeTheme = QtWidgets.QPushButton(self.bottomBar)
-        self.changeTheme.setMinimumSize(QtCore.QSize(40, 40))
-        self.changeTheme.setMaximumSize(QtCore.QSize(40, 40))
-        self.changeTheme.setText("")
+        self._convert.setIcon(icon7)
+        self._convert.setIconSize(QtCore.QSize(32, 32))
+        self._convert.setObjectName("convert")
+        self._gridLayout.addWidget(self._convert, 1, 1, 1, 1)
+        self._verticalLayout_3.addWidget(self._buttons)
+        self._bottomBar.setMinimumSize(QtCore.QSize(0, 60))
+        self._bottomBar.setMaximumSize(QtCore.QSize(16777215, 60))
+        self._bottomBar.setFrameShape(QtWidgets.QFrame.StyledPanel)
+        self._bottomBar.setFrameShadow(QtWidgets.QFrame.Raised)
+        self._bottomBar.setObjectName("bottomBar")
+        self._horizontalLayout_7.setObjectName("horizontalLayout_7")
+        self._changeTheme.setMinimumSize(QtCore.QSize(40, 40))
+        self._changeTheme.setMaximumSize(QtCore.QSize(40, 40))
+        self._changeTheme.setText("")
         icon8 = QtGui.QIcon()
         icon8.addPixmap(QtGui.QPixmap(":/newPrefix/ZipPerIcons/icons8-moon-32.png"), Qt.QIcon.Normal,
                         Qt.QIcon.Off)
-        self.changeTheme.setIcon(icon8)
-        self.changeTheme.setIconSize(QtCore.QSize(32, 32))
-        self.changeTheme.setObjectName("changeTheme")
-        self.horizontalLayout_7.addWidget(self.changeTheme, 0, Qt.Qt.AlignLeft)
-        self.infoResurses = QtWidgets.QPushButton(self.bottomBar)
-        self.infoResurses.setMinimumSize(QtCore.QSize(40, 40))
-        self.infoResurses.setMaximumSize(QtCore.QSize(40, 40))
-        self.infoResurses.setText("")
+        self._changeTheme.setIcon(icon8)
+        self._changeTheme.setIconSize(QtCore.QSize(32, 32))
+        self._changeTheme.setObjectName("changeTheme")
+        self._horizontalLayout_7.addWidget(self._changeTheme, 0, Qt.Qt.AlignLeft)
+        self._infoResources.setMinimumSize(QtCore.QSize(40, 40))
+        self._infoResources.setMaximumSize(QtCore.QSize(40, 40))
+        self._infoResources.setText("")
         icon9 = QtGui.QIcon()
         icon9.addPixmap(QtGui.QPixmap(":/newPrefix/ZipPerIcons/icons8-info-32.png"), Qt.QIcon.Normal,
                         Qt.QIcon.Off)
-        self.infoResurses.setIcon(icon9)
-        self.infoResurses.setIconSize(QtCore.QSize(32, 32))
-        self.infoResurses.setObjectName("infoResurses")
-        self.horizontalLayout_7.addWidget(self.infoResurses, 0, Qt.Qt.AlignRight)
-        self.verticalLayout_3.addWidget(self.bottomBar)
-        self.stackedWidget.addWidget(self.optionButtons)
-        self.convertor = QtWidgets.QWidget()
-        self.convertor.setStyleSheet("")
-        self.convertor.setObjectName("convertor")
-        self.verticalLayout_2 = QtWidgets.QVBoxLayout(self.convertor)
-        self.verticalLayout_2.setContentsMargins(0, 0, 0, 0)
-        self.verticalLayout_2.setSpacing(0)
-        self.verticalLayout_2.setObjectName("verticalLayout_2")
-        self.convertor_windows = QtWidgets.QStackedWidget(self.convertor)
-        self.convertor_windows.setObjectName("convertor_windows")
+        self._infoResources.setIcon(icon9)
+        self._infoResources.setIconSize(QtCore.QSize(32, 32))
+        self._infoResources.setObjectName("infoResurses")
+        self._horizontalLayout_7.addWidget(self._infoResources, 0, Qt.Qt.AlignRight)
+        self._verticalLayout_3.addWidget(self._bottomBar)
+        self._stackedWidget.addWidget(self._optionButtons)
+        self._convertor.setStyleSheet("")
+        self._convertor.setObjectName("convertor")
+        self._verticalLayout_2.setContentsMargins(0, 0, 0, 0)
+        self._verticalLayout_2.setSpacing(0)
+        self._verticalLayout_2.setObjectName("verticalLayout_2")
+        self._convertor_windows.setObjectName("convertor_windows")
 
-        self.main_page = QList()  # TODO
+        self._main_list.setObjectName("main_page")
+        self._convertor_windows.addWidget(self._main_list)
 
-        self.main_page.setObjectName("main_page")
-        self.convertor_windows.addWidget(self.main_page)
+        self._convertor_windows.addWidget(self._helper_window)
 
-        self.helper_window = HelperPage()
+        self._convertor_windows.setCurrentIndex(1)
 
-        self.convertor_windows.addWidget(self.helper_window)  # TODO Helper Window
-
-        self.convertor_windows.setCurrentIndex(1)
-
-        self.helper_window.on_dragging.connect(self.set_main_page)  # TODO Slot
-
-        self.verticalLayout_2.addWidget(self.convertor_windows)
-        self.bottom = QtWidgets.QFrame(self.convertor)
-        self.bottom.setMinimumSize(QtCore.QSize(0, 80))
-        self.bottom.setMaximumSize(QtCore.QSize(16777215, 80))
-        self.bottom.setStyleSheet("")
-        self.bottom.setFrameShape(QtWidgets.QFrame.StyledPanel)
-        self.bottom.setFrameShadow(QtWidgets.QFrame.Raised)
-        self.bottom.setObjectName("bottom")
-        self.horizontalLayout_3 = QtWidgets.QHBoxLayout(self.bottom)
-        self.horizontalLayout_3.setObjectName("horizontalLayout_3")
-        self.addFile = QtWidgets.QPushButton(self.bottom)
-        self.addFile.setMinimumSize(QtCore.QSize(100, 50))
-        self.addFile.setMaximumSize(QtCore.QSize(100, 50))
-        self.addFile.setStyleSheet("")
+        self._verticalLayout_2.addWidget(self._convertor_windows)
+        self._bottom.setMinimumSize(QtCore.QSize(0, 80))
+        self._bottom.setMaximumSize(QtCore.QSize(16777215, 80))
+        self._bottom.setStyleSheet("")
+        self._bottom.setFrameShape(QtWidgets.QFrame.StyledPanel)
+        self._bottom.setFrameShadow(QtWidgets.QFrame.Raised)
+        self._bottom.setObjectName("bottom")
+        self._horizontalLayout_3.setObjectName("horizontalLayout_3")
+        self._addFile.setMinimumSize(QtCore.QSize(100, 50))
+        self._addFile.setMaximumSize(QtCore.QSize(100, 50))
+        self._addFile.setStyleSheet("")
         icon10 = QtGui.QIcon()
         icon10.addPixmap(QtGui.QPixmap(":/newPrefix/ZipPerIcons/icons8-add-file-32.png"), Qt.QIcon.Normal,
                          Qt.QIcon.Off)
-        self.addFile.setIcon(icon10)
-        self.addFile.setIconSize(QtCore.QSize(32, 32))
-        self.addFile.setObjectName("addFile")
-        self.horizontalLayout_3.addWidget(self.addFile, 0, Qt.Qt.AlignLeft)
-        self.generate = QtWidgets.QPushButton(self.bottom)
-        self.generate.setMinimumSize(QtCore.QSize(400, 50))
-        self.generate.setMaximumSize(QtCore.QSize(400, 50))
-        self.generate.setStyleSheet("")
+        self._addFile.setIcon(icon10)
+        self._addFile.setIconSize(QtCore.QSize(32, 32))
+        self._addFile.setObjectName("addFile")
+        self._horizontalLayout_3.addWidget(self._addFile, 0, Qt.Qt.AlignLeft)
+        self._generate.setMinimumSize(QtCore.QSize(400, 50))
+        self._generate.setMaximumSize(QtCore.QSize(400, 50))
+        self._generate.setStyleSheet("")
         icon11 = QtGui.QIcon()
         icon11.addPixmap(QtGui.QPixmap(":/newPrefix/ZipPerIcons/icons8-create-32.png"), Qt.QIcon.Normal,
                          Qt.QIcon.Off)
-        self.generate.setIcon(icon11)
-        self.generate.setIconSize(QtCore.QSize(32, 32))
-        self.generate.setObjectName("generate")
-        self.horizontalLayout_3.addWidget(self.generate, 0, Qt.Qt.AlignHCenter)
-        self.delFile = QtWidgets.QPushButton(self.bottom)
-        self.delFile.setMinimumSize(QtCore.QSize(100, 50))
-        self.delFile.setMaximumSize(QtCore.QSize(100, 50))
-        self.delFile.setStyleSheet("")
+        self._generate.setIcon(icon11)
+        self._generate.setIconSize(QtCore.QSize(32, 32))
+        self._generate.setObjectName("generate")
+        self._horizontalLayout_3.addWidget(self._generate, 0, Qt.Qt.AlignHCenter)
+        self._delFile.setMinimumSize(QtCore.QSize(100, 50))
+        self._delFile.setMaximumSize(QtCore.QSize(100, 50))
+        self._delFile.setStyleSheet("")
         icon12 = QtGui.QIcon()
         icon12.addPixmap(QtGui.QPixmap(":/newPrefix/ZipPerIcons/icons8-delete-file-32.png"), Qt.QIcon.Normal,
                          Qt.QIcon.Off)
-        self.delFile.setIcon(icon12)
-        self.delFile.setIconSize(QtCore.QSize(32, 32))
-        self.delFile.setObjectName("delFile")
-        self.horizontalLayout_3.addWidget(self.delFile, 0, Qt.Qt.AlignRight)
-        self.verticalLayout_2.addWidget(self.bottom)
-        self.stackedWidget.addWidget(self.convertor)
-        self.horizontalLayout_2.addWidget(self.stackedWidget)
-        self.verticalLayout.addWidget(self.mainBody)
-        MainWindow.setCentralWidget(self.centralwidget)
+        self._delFile.setIcon(icon12)
+        self._delFile.setIconSize(QtCore.QSize(32, 32))
+        self._delFile.setObjectName("delFile")
+        self._horizontalLayout_3.addWidget(self._delFile, 0, Qt.Qt.AlignRight)
+        self._verticalLayout_2.addWidget(self._bottom)
+        self._stackedWidget.addWidget(self._convertor)
+        self._horizontalLayout_2.addWidget(self._stackedWidget)
+        self._verticalLayout.addWidget(self._mainBody)
+        main_window.setCentralWidget(self._central_widget)
 
-        self.retranslate_ui(MainWindow)
-        self.stackedWidget.setCurrentIndex(0)
-        QtCore.QMetaObject.connectSlotsByName(MainWindow)
+        self._translate_ui(main_window)
+        self._stackedWidget.setCurrentIndex(0)
+        QtCore.QMetaObject.connectSlotsByName(main_window)
 
-    def retranslate_ui(self, MainWindow):
+    def _translate_ui(self, main_window):
         _translate = QtCore.QCoreApplication.translate
-        MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
-        self.name.setText(_translate("MainWindow", "ZipPer"))
-        self.rarPack.setText(_translate("MainWindow", "Pack in .rar"))
-        self.zipPack.setText(_translate("MainWindow", "Pack in .zip"))
-        self.unpack.setText(_translate("MainWindow", "Unpack"))
-        self.convert.setText(_translate("MainWindow", "Word to pdf"))
-        self.addFile.setText(_translate("MainWindow", "Add"))
-        self.generate.setText(_translate("MainWindow", "Generate"))
-        self.delFile.setText(_translate("MainWindow", "Delete"))
+        main_window.setWindowTitle(_translate("MainWindow", "MainWindow"))
+        self._name.setText(_translate("MainWindow", "ZipPer"))
+        self._rarPack.setText(_translate("MainWindow", "Pack in .rar"))
+        self._zipPack.setText(_translate("MainWindow", "Pack in .zip"))
+        self._unpack.setText(_translate("MainWindow", "Unpack"))
+        self._convert.setText(_translate("MainWindow", "Word to pdf"))
+        self._addFile.setText(_translate("MainWindow", "Add"))
+        self._generate.setText(_translate("MainWindow", "Generate"))
+        self._delFile.setText(_translate("MainWindow", "Delete"))
 
-    def set_main_page(self):
-        self.convertor_windows.setCurrentIndex(0)
+    def _open_main_page(self):
+        self._main_list.delete_all()
+        self._set_helper_convertor()
+        self._stackedWidget.setCurrentIndex(0)
 
-    def set_helper_page(self):
-        self.convertor_windows.setCurrentIndex(1)
+    def _open_convertor_page(self):
+        self._stackedWidget.setCurrentIndex(1)
+
+    def _set_main_convertor(self):
+        self._convertor_windows.setCurrentIndex(0)
+
+    def _set_helper_convertor(self):
+        self._convertor_windows.setCurrentIndex(1)
+
+    def _update_window(self):
+        if self._convertor_windows.currentIndex() == 1:
+            self._set_main_convertor()
 
 
-class HelperPage(QWidget):
+class _HelperPage(QWidget):
     """
     This window show prompt for user, that it can use drag and drop, as soon as the user starts dragging the file,
     this class sends a signal to change the window to set the main window
@@ -380,43 +412,43 @@ class HelperPage(QWidget):
     on_dragging = QtCore.pyqtSignal()
 
     def __init__(self):
-        super(HelperPage, self).__init__(parent=None)
+        super(_HelperPage, self).__init__(parent=None)
         self.setAcceptDrops(True)
 
         self.setObjectName("helper_window")
-        self.horizontalLayout_8 = QtWidgets.QHBoxLayout(self)
-        self.horizontalLayout_8.setContentsMargins(0, 0, 0, 0)
-        self.horizontalLayout_8.setSpacing(0)
-        self.horizontalLayout_8.setObjectName("horizontalLayout_8")
-        self.helper_frame = QtWidgets.QFrame(self)
-        self.helper_frame.setMinimumSize(QtCore.QSize(400, 100))
-        self.helper_frame.setMaximumSize(QtCore.QSize(400, 100))
-        self.helper_frame.setFrameShape(QtWidgets.QFrame.StyledPanel)
-        self.helper_frame.setFrameShadow(QtWidgets.QFrame.Raised)
-        self.helper_frame.setObjectName("helper_frame")
-        self.horizontalLayout_9 = QtWidgets.QHBoxLayout(self.helper_frame)
-        self.horizontalLayout_9.setContentsMargins(0, 0, 0, 0)
-        self.horizontalLayout_9.setSpacing(0)
-        self.horizontalLayout_9.setObjectName("horizontalLayout_9")
-        self.icon_helper = QtWidgets.QLabel(self.helper_frame)
-        self.icon_helper.setText("")
-        self.icon_helper.setPixmap(QtGui.QPixmap(":/newPrefix/ZipPerIcons/icons8-drag-and-drop-32.png"))
-        self.icon_helper.setObjectName("icon_helper")
-        self.horizontalLayout_9.addWidget(self.icon_helper)
-        self.text_helper = QtWidgets.QLabel(self.helper_frame)
+        self._horizontalLayout_8 = QtWidgets.QHBoxLayout(self)
+        self._horizontalLayout_8.setContentsMargins(0, 0, 0, 0)
+        self._horizontalLayout_8.setSpacing(0)
+        self._horizontalLayout_8.setObjectName("horizontalLayout_8")
+        self._helper_frame = QtWidgets.QFrame(self)
+        self._helper_frame.setMinimumSize(QtCore.QSize(400, 100))
+        self._helper_frame.setMaximumSize(QtCore.QSize(400, 100))
+        self._helper_frame.setFrameShape(QtWidgets.QFrame.StyledPanel)
+        self._helper_frame.setFrameShadow(QtWidgets.QFrame.Raised)
+        self._helper_frame.setObjectName("helper_frame")
+        self._horizontalLayout_9 = QtWidgets.QHBoxLayout(self._helper_frame)
+        self._horizontalLayout_9.setContentsMargins(0, 0, 0, 0)
+        self._horizontalLayout_9.setSpacing(0)
+        self._horizontalLayout_9.setObjectName("horizontalLayout_9")
+        self._icon_helper = QtWidgets.QLabel(self._helper_frame)
+        self._icon_helper.setText("")
+        self._icon_helper.setPixmap(QtGui.QPixmap(":/newPrefix/ZipPerIcons/icons8-drag-and-drop-32.png"))
+        self._icon_helper.setObjectName("icon_helper")
+        self._horizontalLayout_9.addWidget(self._icon_helper)
+        self._text_helper = QtWidgets.QLabel(self._helper_frame)
         font = QtGui.QFont()
         font.setPointSize(19)
-        self.text_helper.setFont(font)
-        self.text_helper.setObjectName("text_helper")
-        self.horizontalLayout_9.addWidget(self.text_helper)
-        self.horizontalLayout_8.addWidget(self.helper_frame, 0, Qt.Qt.AlignHCenter | Qt.Qt.AlignVCenter)
-        self.text_helper.setText("Drag and Drop your files here")
+        self._text_helper.setFont(font)
+        self._text_helper.setObjectName("text_helper")
+        self._horizontalLayout_9.addWidget(self._text_helper)
+        self._horizontalLayout_8.addWidget(self._helper_frame, 0, Qt.Qt.AlignHCenter | Qt.Qt.AlignVCenter)
+        self._text_helper.setText("Drag and Drop your files")
 
     def dragEnterEvent(self, event):
         self.on_dragging.emit()
 
 
-class QCustomQWidget(QWidget):
+class _QCustomQWidget(QWidget):
     """
     Class of custom element QListWidget, has an icon and text, icon and text, the icon is selected from the system
     for a specific file type, you can set the color of the text
@@ -427,26 +459,26 @@ class QCustomQWidget(QWidget):
         Initialization
         :param txt_color: Optional parameter - text color array of 3 rgb elements, each element must be < 256.
         """
-        super(QCustomQWidget, self).__init__()
+        super(_QCustomQWidget, self).__init__()
 
         if txt_color and (len(txt_color) != 3 or not all(color < 256 for color in txt_color)):
             raise Exception("Color list must have 3 elements: [red, green, blue] and they must be <= 255")
 
-        self.text_color = txt_color
+        self._text_color = txt_color
 
-        self.horizontal_layout = QHBoxLayout()
+        self._horizontal_layout = QHBoxLayout()
 
-        self.file_name = QLabel()
-        self.file_icon = QLabel()
+        self._file_name = QLabel()
+        self._file_icon = QLabel()
 
-        self.horizontal_layout.addWidget(self.file_icon, 0)
-        self.horizontal_layout.addWidget(self.file_name, 1)
+        self._horizontal_layout.addWidget(self._file_icon, 0)
+        self._horizontal_layout.addWidget(self._file_name, 1)
 
-        self.setLayout(self.horizontal_layout)
+        self.setLayout(self._horizontal_layout)
 
-        if self.text_color:
-            red, green, blue = self.text_color
-            self.file_name.setStyleSheet(f'''
+        if self._text_color:
+            red, green, blue = self._text_color
+            self._file_name.setStyleSheet(f'''
                 color: rgb({red}, {green}, {blue});
             ''')
         self.setStyleSheet(f"background-color: rgb({0}, {0}, {0}, {0});")  # Set alpha to null for correct view
@@ -461,42 +493,50 @@ class QCustomQWidget(QWidget):
         icon_provider = QFileIconProvider()
         icon = icon_provider.icon(file_info)
         pixmap = icon.pixmap(QSize(16, 16))
-        self.file_icon.setPixmap(pixmap)
+        self._file_icon.setPixmap(pixmap)
 
     def set_file_name(self, text):
-        self.file_name.setText(text)
+        self._file_name.setText(text)
 
 
-class QList(QWidget):
+class _QList(QWidget):
     """
     The class representing the work of QListWidget, supports the
     drag and drop function, works together with QCustomQWidget
     """
+    added_file = QtCore.pyqtSignal()
 
     def __init__(self):
-        super(QList, self).__init__(parent=None)
-        self.list_widget = QListWidget(self)
+        super(_QList, self).__init__(parent=None)
+        self._list_widget = QListWidget(self)
         self.setAcceptDrops(True)
 
         self.setStyleSheet("background-color: rgb(175, 182, 190);"
                            "border: 0px")
         window_layout = QVBoxLayout()
-        window_layout.addWidget(self.list_widget)
+        window_layout.addWidget(self._list_widget)
         self.setLayout(window_layout)
 
     def add_file(self, path_to_file: str):
-        custom_widget = QCustomQWidget()
+        if not path_to_file:
+            raise Exception("Empty file path")
+
+        custom_widget = _QCustomQWidget()
         custom_widget.set_file_name(os.path.basename(path_to_file))
         custom_widget.set_file_icon(path_to_file)
 
         list_item = QListWidgetItem()
         list_item.setSizeHint(custom_widget.sizeHint())
 
-        self.list_widget.addItem(list_item)
-        self.list_widget.setItemWidget(list_item, custom_widget)
+        self._list_widget.addItem(list_item)
+        self._list_widget.setItemWidget(list_item, custom_widget)
+
+        self.added_file.emit()
 
     def delete_file(self):
-        pass
+        current_row = self.get_current_row()
+        if current_row >= 0:
+            self._list_widget.takeItem(current_row)
 
     def dragEnterEvent(self, event):
         if event.mimeData().hasUrls():
@@ -508,3 +548,9 @@ class QList(QWidget):
         files = [u.toLocalFile() for u in event.mimeData().urls()]
         for f in files:
             self.add_file(f)
+
+    def get_current_row(self):
+        return self._list_widget.currentRow()
+
+    def delete_all(self):
+        self._list_widget.clear()
