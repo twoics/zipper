@@ -1,13 +1,13 @@
 """This module is the UI of the application, all the main widgets are located here."""
-import os
 from PyQt5 import Qt
 from PyQt5.QtCore import QSize
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QLabel, QFileIconProvider, QListWidget, QVBoxLayout, \
     QListWidgetItem, QFileDialog
 from PyQt5.QtWidgets import QMainWindow
+from pathlib import Path
 
-import ZipPerIcons
+import zip_per_icons
 
 MAIN_BACKGROUND_COLOR = [175, 182, 190]
 BUTTON_COLOR = [222, 226, 230]
@@ -21,6 +21,7 @@ MAIN_BODY_BACKGROUND = [173, 181, 189]
 
 class UiZipPer(QMainWindow):
     """Main UI"""
+    generate_signal = QtCore.pyqtSignal(list)  # Signal from UI to controller
 
     def __init__(self):
         QMainWindow.__init__(self, parent=None)
@@ -84,12 +85,13 @@ class UiZipPer(QMainWindow):
 
         self._addFile.clicked.connect(lambda: self._main_list.add_file(QFileDialog.getOpenFileName()[0]))
         self._delFile.clicked.connect(lambda: self._main_list.delete_file())
+        self._generate.clicked.connect(lambda: self.generate_signal.emit(self._main_list.get_files_path()))
 
     def _setup_ui(self, main_window):
         main_window.setObjectName("MainWindow")
         main_window.resize(954, 643)
         self._central_widget.setStyleSheet(f"background-color: rgb({MAIN_BACKGROUND_COLOR[0]}, "
-                                          f"{MAIN_BACKGROUND_COLOR[1]}, {MAIN_BACKGROUND_COLOR[2]});")
+                                           f"{MAIN_BACKGROUND_COLOR[1]}, {MAIN_BACKGROUND_COLOR[2]});")
         self._central_widget.setObjectName("centralwidget")
         self._verticalLayout.setContentsMargins(0, 0, 0, 0)
         self._verticalLayout.setSpacing(0)
@@ -97,13 +99,14 @@ class UiZipPer(QMainWindow):
         self._appBar.setMinimumSize(QtCore.QSize(0, 70))
         self._appBar.setMaximumSize(QtCore.QSize(16777215, 70))
         self._appBar.setStyleSheet("QPushButton{"
-                                  f"background-color: rgb({BUTTON_COLOR[0]}, {BUTTON_COLOR[1]}, {BUTTON_COLOR[2]});"
-                                  "    border-radius: 15;"
-                                  "}"
-                                  "QPushButton::hover"
-                                  "{"
-                                  f"    background-color: rgb({BUTTON_HOVER[0]}, {BUTTON_HOVER[1]}, {BUTTON_HOVER[2]});"
-                                  "}")
+                                   f"background-color: rgb({BUTTON_COLOR[0]}, {BUTTON_COLOR[1]}, {BUTTON_COLOR[2]});"
+                                   "    border-radius: 15;"
+                                   "}"
+                                   "QPushButton::hover"
+                                   "{"
+                                   f"    background-color: rgb({BUTTON_HOVER[0]}, {BUTTON_HOVER[1]}, "
+                                   f"{BUTTON_HOVER[2]});"
+                                   "}")
 
         self._appBar.setFrameShape(QtWidgets.QFrame.StyledPanel)
         self._appBar.setFrameShadow(QtWidgets.QFrame.Raised)
@@ -150,15 +153,16 @@ class UiZipPer(QMainWindow):
         self._topRightButtons.setMinimumSize(QtCore.QSize(80, 0))
         self._topRightButtons.setMaximumSize(QtCore.QSize(150, 16777215))
         self._topRightButtons.setStyleSheet("QPushButton{"
-                                           "        border-radius: 5;"
-                                           f"        background-color: rgb({TOP_RIGHT_BACKGROUND[0]}, "
-                                           f"{TOP_RIGHT_BACKGROUND[1]}, {TOP_RIGHT_BACKGROUND[2]});"
-                                           "}"
-                                           "QPushButton::hover"
-                                           "{"
-                                           f"        background-color : rgb({TOP_RIGHT_HOVER[0]}, {TOP_RIGHT_HOVER[1]},"
-                                           f" {TOP_RIGHT_HOVER[2]});"
-                                           "}")
+                                            "        border-radius: 5;"
+                                            f"        background-color: rgb({TOP_RIGHT_BACKGROUND[0]}, "
+                                            f"{TOP_RIGHT_BACKGROUND[1]}, {TOP_RIGHT_BACKGROUND[2]});"
+                                            "}"
+                                            "QPushButton::hover"
+                                            "{"
+                                            f"        background-color : rgb({TOP_RIGHT_HOVER[0]}, "
+                                            f"{TOP_RIGHT_HOVER[1]},"
+                                            f" {TOP_RIGHT_HOVER[2]});"
+                                            "}")
         self._topRightButtons.setFrameShape(QtWidgets.QFrame.StyledPanel)
         self._topRightButtons.setFrameShadow(QtWidgets.QFrame.Raised)
         self._topRightButtons.setObjectName("topRightButtons")
@@ -180,15 +184,15 @@ class UiZipPer(QMainWindow):
         self._maximizeButton.setObjectName("maximazeButton")
         self._horizontalLayout_4.addWidget(self._maximizeButton)
         self._closeButton.setStyleSheet("QPushButton{"
-                                       "        border-radius: 5;"
-                                       f"        background-color: rgb({TOP_RIGHT_BACKGROUND[0]}, "
-                                       f"{TOP_RIGHT_BACKGROUND[1]}, {TOP_RIGHT_BACKGROUND[2]});"
-                                       "}"
-                                       "QPushButton::hover"
-                                       "{"
-                                       f"    background-color: rgb({CLOSE_BUTTON_HOVER[0]}, {CLOSE_BUTTON_HOVER[1]},"
-                                       f" {CLOSE_BUTTON_HOVER[2]});"
-                                       "}")
+                                        "        border-radius: 5;"
+                                        f"        background-color: rgb({TOP_RIGHT_BACKGROUND[0]}, "
+                                        f"{TOP_RIGHT_BACKGROUND[1]}, {TOP_RIGHT_BACKGROUND[2]});"
+                                        "}"
+                                        "QPushButton::hover"
+                                        "{"
+                                        f"    background-color: rgb({CLOSE_BUTTON_HOVER[0]}, {CLOSE_BUTTON_HOVER[1]},"
+                                        f" {CLOSE_BUTTON_HOVER[2]});"
+                                        "}")
         self._closeButton.setText("")
         icon3 = QtGui.QIcon()
         icon3.addPixmap(QtGui.QPixmap(":/newPrefix/ZipPerIcons/icons8-close-window-32.png"), Qt.QIcon.Normal,
@@ -201,7 +205,7 @@ class UiZipPer(QMainWindow):
         self._verticalLayout.addWidget(self._appBar)
         self._mainBody.setMinimumSize(QtCore.QSize(0, 0))
         self._mainBody.setStyleSheet(f"background-color: rgb({MAIN_BODY_BACKGROUND[0]}, "
-                                    f"{MAIN_BODY_BACKGROUND[1]}, {MAIN_BODY_BACKGROUND[2]});")
+                                     f"{MAIN_BODY_BACKGROUND[1]}, {MAIN_BODY_BACKGROUND[2]});")
         self._mainBody.setFrameShape(QtWidgets.QFrame.StyledPanel)
         self._mainBody.setFrameShadow(QtWidgets.QFrame.Raised)
         self._mainBody.setObjectName("mainBody")
@@ -209,15 +213,15 @@ class UiZipPer(QMainWindow):
         self._horizontalLayout_2.setSpacing(0)
         self._horizontalLayout_2.setObjectName("horizontalLayout_2")
         self._stackedWidget.setStyleSheet("QPushButton{"
-                                         f"    background-color: rgb({BUTTON_COLOR[0]}, "
-                                         f"{BUTTON_COLOR[1]}, {BUTTON_COLOR[2]});"
-                                         "    border-radius: 15;"
-                                         "}"
-                                         "QPushButton::hover"
-                                         "{"
-                                         f"    background-color: rgb({BUTTON_HOVER[0]}, {BUTTON_HOVER[1]},"
-                                         f" {BUTTON_HOVER[2]});"
-                                         "}")
+                                          f"    background-color: rgb({BUTTON_COLOR[0]}, "
+                                          f"{BUTTON_COLOR[1]}, {BUTTON_COLOR[2]});"
+                                          "    border-radius: 15;"
+                                          "}"
+                                          "QPushButton::hover"
+                                          "{"
+                                          f"    background-color: rgb({BUTTON_HOVER[0]}, {BUTTON_HOVER[1]},"
+                                          f" {BUTTON_HOVER[2]});"
+                                          "}")
         self._stackedWidget.setObjectName("stackedWidget")
         self._optionButtons.setStyleSheet("")
         self._optionButtons.setObjectName("optionButtons")
@@ -483,20 +487,22 @@ class _QCustomQWidget(QWidget):
             ''')
         self.setStyleSheet(f"background-color: rgb({0}, {0}, {0}, {0});")  # Set alpha to null for correct view
 
-    def set_file_icon(self, path_to_file: str):
+    def set_file_icon(self, path_to_file: Path):
         """
-        Set icon from system
+        Set icon from system icons
         :param path_to_file: Way to file
+        :type path_to_file: Path
         :return: None
         """
-        file_info = QtCore.QFileInfo(path_to_file)
+        file_info = QtCore.QFileInfo(str(path_to_file))
+
         icon_provider = QFileIconProvider()
         icon = icon_provider.icon(file_info)
         pixmap = icon.pixmap(QSize(16, 16))
         self._file_icon.setPixmap(pixmap)
 
-    def set_file_name(self, text):
-        self._file_name.setText(text)
+    def set_file_name(self, file: Path):
+        self._file_name.setText(file.name)
 
 
 class _QList(QWidget):
@@ -508,6 +514,7 @@ class _QList(QWidget):
 
     def __init__(self):
         super(_QList, self).__init__(parent=None)
+        self._Path_dict = {}  # index : Path
         self._list_widget = QListWidget(self)
         self.setAcceptDrops(True)
 
@@ -517,16 +524,28 @@ class _QList(QWidget):
         window_layout.addWidget(self._list_widget)
         self.setLayout(window_layout)
 
+    def get_files_path(self):
+        """
+        Return list with objects pathlib.Path
+        :return: list
+        """
+        return list(self._Path_dict.values())
+
     def add_file(self, path_to_file: str):
         if not path_to_file:
-            raise Exception("Empty file path")
+            raise FileNotFoundError("Empty file path")
+
+        path = Path(path_to_file)
 
         custom_widget = _QCustomQWidget()
-        custom_widget.set_file_name(os.path.basename(path_to_file))
-        custom_widget.set_file_icon(path_to_file)
+        custom_widget.set_file_name(path)
+        custom_widget.set_file_icon(path)
 
         list_item = QListWidgetItem()
         list_item.setSizeHint(custom_widget.sizeHint())
+
+        current_index = self._list_widget.count()
+        self._Path_dict[current_index] = path
 
         self._list_widget.addItem(list_item)
         self._list_widget.setItemWidget(list_item, custom_widget)
@@ -537,6 +556,7 @@ class _QList(QWidget):
         current_row = self.get_current_row()
         if current_row >= 0:
             self._list_widget.takeItem(current_row)
+            self._Path_dict.pop(current_row)
 
     def dragEnterEvent(self, event):
         if event.mimeData().hasUrls():
