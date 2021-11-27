@@ -1,3 +1,4 @@
+"""This module is for converting files"""
 import zipfile
 import os
 from PyQt5 import QtCore
@@ -7,7 +8,7 @@ from pathlib import Path
 class FileConvertor(QtCore.QObject):
     """Class for converting files"""
 
-    process_percent = QtCore.pyqtSignal(int)
+    process_percent = QtCore.pyqtSignal(int)  # Signal with the number of sorted files as a percentage
 
     def __init__(self):
         super(FileConvertor, self).__init__()
@@ -22,6 +23,7 @@ class FileConvertor(QtCore.QObject):
         :return: None
         """
         result_dir = "D:/test_folder/" + archive_name + ".zip"
+        # result_dir doesnt using while testing
         total_size = 0
         for path in path_files_to_convert:
             total_size += os.path.getsize(path)
