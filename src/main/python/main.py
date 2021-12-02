@@ -11,12 +11,12 @@ class Main:
         self._window_UI = UiZipPer()
         self._window_UI.show()
 
-        self.thread = QtCore.QThread()
+        self._thread = QtCore.QThread()
         self._controller = Controller()
 
-        self._controller.moveToThread(self.thread)
+        self._controller.moveToThread(self._thread)
 
-        self.thread.start()
+        self._thread.start()
         self._slots()
 
     def _slots(self):
