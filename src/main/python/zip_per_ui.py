@@ -169,7 +169,7 @@ class UiZipPer(QMainWindow):
         self._horizontalLayout_4.setObjectName("horizontalLayout_4")
         self._minimizeButton.setText("")
         icon1 = QtGui.QIcon()
-        icon1.addPixmap(QtGui.QPixmap(":/newPrefix/ZipPerIcons/icons8-minimize-window-32.png"), Qt.QIcon.Normal,
+        icon1.addPixmap(QtGui.QPixmap(":/newPrefix/ZipPerIcons/minimize.png"), Qt.QIcon.Normal,
                         Qt.QIcon.Off)
         self._minimizeButton.setIcon(icon1)
         self._minimizeButton.setIconSize(QtCore.QSize(24, 24))
@@ -177,7 +177,7 @@ class UiZipPer(QMainWindow):
         self._horizontalLayout_4.addWidget(self._minimizeButton)
         self._maximizeButton.setText("")
         icon2 = QtGui.QIcon()
-        icon2.addPixmap(QtGui.QPixmap(":/newPrefix/ZipPerIcons/icons8-maximize-window-32.png"), Qt.QIcon.Normal,
+        icon2.addPixmap(QtGui.QPixmap(":/newPrefix/ZipPerIcons/maximize.png"), Qt.QIcon.Normal,
                         Qt.QIcon.Off)
         self._maximizeButton.setIcon(icon2)
         self._maximizeButton.setIconSize(QtCore.QSize(24, 24))
@@ -195,7 +195,7 @@ class UiZipPer(QMainWindow):
                                         "}")
         self._closeButton.setText("")
         icon3 = QtGui.QIcon()
-        icon3.addPixmap(QtGui.QPixmap(":/newPrefix/ZipPerIcons/icons8-close-window-32.png"), Qt.QIcon.Normal,
+        icon3.addPixmap(QtGui.QPixmap(":/newPrefix/ZipPerIcons/close.png"), Qt.QIcon.Normal,
                         Qt.QIcon.Off)
         self._closeButton.setIcon(icon3)
         self._closeButton.setIconSize(QtCore.QSize(24, 24))
@@ -242,7 +242,7 @@ class UiZipPer(QMainWindow):
         self._rarPack.setFont(font)
         self._rarPack.setStyleSheet("")
         icon4 = QtGui.QIcon()
-        icon4.addPixmap(QtGui.QPixmap(":/newPrefix/ZipPerIcons/icons8-rar-32.png"), Qt.QIcon.Normal, Qt.QIcon.Off)
+        icon4.addPixmap(QtGui.QPixmap(":/newPrefix/ZipPerIcons/compress_and_create-depositphotos-bgremover.png"), Qt.QIcon.Normal, Qt.QIcon.Off)
         self._rarPack.setIcon(icon4)
         self._rarPack.setIconSize(QtCore.QSize(32, 32))
         self._rarPack.setObjectName("rarPack")
@@ -254,7 +254,7 @@ class UiZipPer(QMainWindow):
         self._zipPack.setFont(font)
         self._zipPack.setStyleSheet("")
         icon5 = QtGui.QIcon()
-        icon5.addPixmap(QtGui.QPixmap(":/newPrefix/ZipPerIcons/icons8-zip-32.png"), Qt.QIcon.Normal, Qt.QIcon.Off)
+        icon5.addPixmap(QtGui.QPixmap(":/newPrefix/ZipPerIcons/icons8-create-archive-32.png"), Qt.QIcon.Normal, Qt.QIcon.Off)
         self._zipPack.setIcon(icon5)
         self._zipPack.setIconSize(QtCore.QSize(32, 32))
         self._zipPack.setObjectName("zipPack")
@@ -266,7 +266,7 @@ class UiZipPer(QMainWindow):
         self._unpack.setFont(font)
         self._unpack.setStyleSheet("")
         icon6 = QtGui.QIcon()
-        icon6.addPixmap(QtGui.QPixmap(":/newPrefix/ZipPerIcons/icons8-unpacking-32.png"), Qt.QIcon.Normal,
+        icon6.addPixmap(QtGui.QPixmap(":/newPrefix/ZipPerIcons/unpack.png"), Qt.QIcon.Normal,
                         Qt.QIcon.Off)
         self._unpack.setIcon(icon6)
         self._unpack.setIconSize(QtCore.QSize(32, 32))
@@ -279,7 +279,7 @@ class UiZipPer(QMainWindow):
         self._convert.setFont(font)
         self._convert.setStyleSheet("")
         icon7 = QtGui.QIcon()
-        icon7.addPixmap(QtGui.QPixmap(":/newPrefix/ZipPerIcons/icons8-export-pdf-32.png"), Qt.QIcon.Normal,
+        icon7.addPixmap(QtGui.QPixmap(":/newPrefix/ZipPerIcons/file_change.png"), Qt.QIcon.Normal,
                         Qt.QIcon.Off)
         self._convert.setIcon(icon7)
         self._convert.setIconSize(QtCore.QSize(32, 32))
@@ -380,10 +380,10 @@ class UiZipPer(QMainWindow):
         _translate = QtCore.QCoreApplication.translate
         main_window.setWindowTitle(_translate("MainWindow", "MainWindow"))
         self._name.setText(_translate("MainWindow", "ZipPer"))
-        self._rarPack.setText(_translate("MainWindow", "Pack in .rar"))
-        self._zipPack.setText(_translate("MainWindow", "Pack in .zip"))
+        self._rarPack.setText(_translate("MainWindow", "Compression"))
+        self._zipPack.setText(_translate("MainWindow", "Not Compress"))
         self._unpack.setText(_translate("MainWindow", "Unpack"))
-        self._convert.setText(_translate("MainWindow", "Word to pdf"))
+        self._convert.setText(_translate("MainWindow", "Edit"))
         self._addFile.setText(_translate("MainWindow", "Add"))
         self._generate.setText(_translate("MainWindow", "Generate"))
         self._delFile.setText(_translate("MainWindow", "Delete"))

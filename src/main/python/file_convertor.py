@@ -36,3 +36,6 @@ class FileConvertor(QtCore.QObject):
             z_archive.write(path, os.path.basename(path))
             current_size += os.path.getsize(path)
         z_archive.close()
+
+    def unzip_archive(self, path_to_archive, result_dir):
+        pass
