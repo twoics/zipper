@@ -11,11 +11,11 @@ class Controller(QtCore.QObject):
 
     def __init__(self):
         super(Controller, self).__init__()
-        self.convertor = FileConvertor()
+        self._convertor = FileConvertor()
         self._slots()
 
     def _slots(self):
-        self.convertor.process_percent.connect(self._show_count_percent)
+        self._convertor.process_percent.connect(self._show_count_percent)
 
     def _show_count_percent(self, percent):
         print(percent)
@@ -24,5 +24,6 @@ class Controller(QtCore.QObject):
         """
         Method that is executed in another thread, converting files
         """
-        self.convertor.zip_convert(file_list, Path("None"), "Aboba")
+        # self.convertor.zip_convert(file_list, Path("None"), "Aboba")  # Convert to zip
+        self._convertor.unzip_archive("D:/C_Project/7_Laba.zip", None)  # Unpack Zip
         self.finished.emit()
