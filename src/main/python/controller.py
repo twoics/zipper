@@ -24,6 +24,6 @@ class Controller(QtCore.QObject):
         """
         Method that is executed in another thread, converting files
         """
-        # self.convertor.zip_convert(file_list, Path("None"), "Aboba")  # Convert to zip
-        self._convertor.unzip_archive("D:/C_Project/7_Laba.zip", None)  # Unpack Zip
+        self._convertor.zip_convert(file_list, Path("None"), "Aboba", compression=False)  # Convert to zip
+        # self._convertor.unzip_archive("D:/C_Project/7_Laba.zip", None)  # Unpack Zip
         self.finished.emit()
