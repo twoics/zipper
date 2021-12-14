@@ -23,7 +23,7 @@ class FileConvertor(QtCore.QObject):
         :return: None
         """
         result_dir = "D:/test_folder/" + archive_name + ".zip"
-        # result_dir doesnt using while testing
+        # TODO Remove this before start
         total_size = 0
         for path in path_files_to_convert:
             total_size += os.path.getsize(path)
@@ -38,4 +38,19 @@ class FileConvertor(QtCore.QObject):
         z_archive.close()
 
     def unzip_archive(self, path_to_archive, result_dir):
-        pass
+        """
+        Unpacks a .zip archive into the specified directory
+        Also, at runtime, it sends a signal - the percentage of converted files
+        :param path_to_archive:
+        :param result_dir:
+        :return: None
+        """
+        with zipfile.ZipFile(path_to_archive, "r") as zip_file:
+            path_list = zip_file.namelist()
+            total_size = len(path_list)
+            current_size = 0
+            for fileName in path_list:
+                zip_file.extract(fileName, "D:/test_folder/")
+                # TODO Remove this before start
+                current_size += 1
+                self.process_percent.emit((current_size / total_size) * 100)
