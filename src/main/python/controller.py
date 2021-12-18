@@ -18,12 +18,16 @@ class Controller(QtCore.QObject):
         self._convertor.process_percent.connect(self._show_count_percent)
 
     def _show_count_percent(self, percent):
+        pass
+        # TODO Uncomment percent
         print(percent)
 
     def run(self, file_list: list):
         """
         Method that is executed in another thread, converting files
         """
-        self._convertor.zip_convert(file_list, Path("None"), "Aboba", compression=False)  # Convert to zip
-        # self._convertor.unzip_archive("D:/C_Project/7_Laba.zip", None)  # Unpack Zip
+        # self._convertor.zip_convert(file_list, Path("None"), "Aboba", compression=False)  # Convert to zip
+        self._convertor.unzip_archive("C:/test_folder/Aboba.zip", None)  # Unpack Zip
+        # TODO Change here
+
         self.finished.emit()
