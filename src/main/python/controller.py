@@ -3,6 +3,11 @@ from pathlib import Path
 from PyQt5 import QtCore
 from file_convertor import FileConvertor
 
+# Operation mode
+_CREATE_ZIP_WITH_COMPRESS = 1
+_CREATE_ZIP_NOT_COMPRESS = 2
+_UNZIP = 3
+
 
 # TODO Division by zero
 
@@ -22,12 +27,19 @@ class Controller(QtCore.QObject):
         # TODO Uncomment percent
         print(percent)
 
-    def run(self, file_list: list):
+    def run(self, file_list: list, operation_mode):
         """
         Method that is executed in another thread, converting files
         """
-        # self._convertor.zip_convert(file_list, Path("None"), "Aboba", compression=False)  # Convert to zip
-        self._convertor.unzip_archive("C:/test_folder/Aboba.zip", None)  # Unpack Zip
-        # TODO Change here
-
+        print(operation_mode)
+        if operation_mode == _CREATE_ZIP_WITH_COMPRESS:
+            self._convertor.zip_convert(file_list, Path("None"), "Aboba", compression=True)
+        elif operation_mode == _CREATE_ZIP_NOT_COMPRESS:
+            pass
+        else:
+            self._convertor.unzip_archive("D:/test_folder/Aboba.zip", None, "aboba")  # Unpack Zip
         self.finished.emit()
+
+        #   # Convert to zip
+        # self._convertor.unzip_archive("C:/test_folder/Aboba.zip", None)  # Unpack Zip
+        # TODO Change here
