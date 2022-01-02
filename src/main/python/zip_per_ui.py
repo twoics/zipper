@@ -1,30 +1,39 @@
 """This module is the UI of the application, all the main widgets are located here."""
 from PyQt5 import Qt
-from PyQt5.QtCore import QSize
 from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtWidgets import QWidget, QHBoxLayout, QLabel, QFileIconProvider, QListWidget, QVBoxLayout, \
-    QListWidgetItem, QFileDialog
+from PyQt5.QtWidgets import QFileDialog, QMessageBox
 from PyQt5.QtWidgets import QMainWindow
-from pathlib import Path
-
+from information_window import _HelperPage
+from files_list import _QList
+from path_selection_widget import Dialog
 import zip_per_icons
 
-MAIN_BACKGROUND_COLOR = [175, 182, 190]
-BUTTON_COLOR = [222, 226, 230]
-BUTTON_HOVER = [220, 220, 221]
-APP_NAME = [255, 255, 255]
-TOP_RIGHT_HOVER = [220, 220, 221]
-TOP_RIGHT_BACKGROUND = [173, 181, 189]
-CLOSE_BUTTON_HOVER = [255, 94, 91]
-MAIN_BODY_BACKGROUND = [173, 181, 189]
+# Colors
+_MAIN_BACKGROUND_COLOR = [175, 182, 190]
+_BUTTON_COLOR = [222, 226, 230]
+_BUTTON_HOVER = [220, 220, 221]
+_APP_NAME = [255, 255, 255]
+_TOP_RIGHT_HOVER = [220, 220, 221]
+_TOP_RIGHT_BACKGROUND = [173, 181, 189]
+_CLOSE_BUTTON_HOVER = [255, 94, 91]
+_MAIN_BODY_BACKGROUND = [173, 181, 189]
+
+# Operation mode
+_CREATE_ZIP_WITH_COMPRESS = 1
+_CREATE_ZIP_NOT_COMPRESS = 2
+_UNZIP = 3
 
 
 class UiZipPer(QMainWindow):
     """Main UI"""
-    generate_signal = QtCore.pyqtSignal(list)  # Signal from UI to controller
+    generate_file_signal = QtCore.pyqtSignal(list, int)  # Signal from UI to controller, to start processing files
+
+    # list - files paths, int - operation mode
 
     def __init__(self):
         QMainWindow.__init__(self, parent=None)
+        self._operating_mode = None
+
         self._central_widget = QtWidgets.QWidget(self)
         self._verticalLayout = QtWidgets.QVBoxLayout(self._central_widget)
         self._appBar = QtWidgets.QFrame(self._central_widget)
@@ -48,10 +57,9 @@ class UiZipPer(QMainWindow):
         self._verticalLayout_3 = QtWidgets.QVBoxLayout(self._optionButtons)
         self._buttons = QtWidgets.QFrame(self._optionButtons)
         self._gridLayout = QtWidgets.QGridLayout(self._buttons)
-        self._rarPack = QtWidgets.QPushButton(self._buttons)
-        self._zipPack = QtWidgets.QPushButton(self._buttons)
-        self._unpack = QtWidgets.QPushButton(self._buttons)
-        self._convert = QtWidgets.QPushButton(self._buttons)
+        self._create_zip_with_compress = QtWidgets.QPushButton(self._buttons)
+        self._create_zip_not_compress = QtWidgets.QPushButton(self._buttons)
+        self._unpack_zip = QtWidgets.QPushButton(self._buttons)
         self._bottomBar = QtWidgets.QFrame(self._optionButtons)
         self._horizontalLayout_7 = QtWidgets.QHBoxLayout(self._bottomBar)
         self._infoResources = QtWidgets.QPushButton(self._bottomBar)
@@ -68,30 +76,38 @@ class UiZipPer(QMainWindow):
         self._delFile = QtWidgets.QPushButton(self._bottom)
 
         # Slots
-        self._create_slots()
+        self._init_signals_and_slots()
 
         # Create UI
         self._setup_ui(self)
 
-    def _create_slots(self):
+    def _init_signals_and_slots(self):
         self._helper_window.on_dragging.connect(self._set_main_convertor)
+
         self._main_list.added_file.connect(self._update_window)
 
-        self._rarPack.clicked.connect(self._open_convertor_page)
-        self._zipPack.clicked.connect(self._open_convertor_page)
-        self._unpack.clicked.connect(self._open_convertor_page)
-        self._convert.clicked.connect(self._open_convertor_page)
         self._backButton.clicked.connect(self._open_main_page)
 
-        self._addFile.clicked.connect(lambda: self._main_list.add_file(QFileDialog.getOpenFileName()[0]))
-        self._delFile.clicked.connect(lambda: self._main_list.delete_file())
-        self._generate.clicked.connect(lambda: self.generate_signal.emit(self._main_list.get_files_path()))
+        # Opens the page and notify about change status
+        self._create_zip_with_compress.clicked.connect(
+            lambda: self._set_convertor_page_with_mode(_CREATE_ZIP_WITH_COMPRESS))
+        self._create_zip_not_compress.clicked.connect(
+            lambda: self._set_convertor_page_with_mode(_CREATE_ZIP_NOT_COMPRESS))
+        self._unpack_zip.clicked.connect(
+            lambda: self._set_convertor_page_with_mode(_UNZIP))
+
+        self._addFile.clicked.connect(
+            lambda: self._main_list.add_file(QFileDialog.getOpenFileName()[0]))
+        self._delFile.clicked.connect(
+            lambda: self._main_list.delete_file())
+
+        self._generate.clicked.connect(self._check_and_emit_signal_to_controller)
 
     def _setup_ui(self, main_window):
         main_window.setObjectName("MainWindow")
         main_window.resize(954, 643)
-        self._central_widget.setStyleSheet(f"background-color: rgb({MAIN_BACKGROUND_COLOR[0]}, "
-                                           f"{MAIN_BACKGROUND_COLOR[1]}, {MAIN_BACKGROUND_COLOR[2]});")
+        self._central_widget.setStyleSheet(f"background-color: rgb({_MAIN_BACKGROUND_COLOR[0]}, "
+                                           f"{_MAIN_BACKGROUND_COLOR[1]}, {_MAIN_BACKGROUND_COLOR[2]});")
         self._central_widget.setObjectName("centralwidget")
         self._verticalLayout.setContentsMargins(0, 0, 0, 0)
         self._verticalLayout.setSpacing(0)
@@ -99,13 +115,13 @@ class UiZipPer(QMainWindow):
         self._appBar.setMinimumSize(QtCore.QSize(0, 70))
         self._appBar.setMaximumSize(QtCore.QSize(16777215, 70))
         self._appBar.setStyleSheet("QPushButton{"
-                                   f"background-color: rgb({BUTTON_COLOR[0]}, {BUTTON_COLOR[1]}, {BUTTON_COLOR[2]});"
+                                   f"background-color: rgb({_BUTTON_COLOR[0]}, {_BUTTON_COLOR[1]}, {_BUTTON_COLOR[2]});"
                                    "    border-radius: 15;"
                                    "}"
                                    "QPushButton::hover"
                                    "{"
-                                   f"    background-color: rgb({BUTTON_HOVER[0]}, {BUTTON_HOVER[1]}, "
-                                   f"{BUTTON_HOVER[2]});"
+                                   f"    background-color: rgb({_BUTTON_HOVER[0]}, {_BUTTON_HOVER[1]}, "
+                                   f"{_BUTTON_HOVER[2]});"
                                    "}")
 
         self._appBar.setFrameShape(QtWidgets.QFrame.StyledPanel)
@@ -154,14 +170,14 @@ class UiZipPer(QMainWindow):
         self._topRightButtons.setMaximumSize(QtCore.QSize(150, 16777215))
         self._topRightButtons.setStyleSheet("QPushButton{"
                                             "        border-radius: 5;"
-                                            f"        background-color: rgb({TOP_RIGHT_BACKGROUND[0]}, "
-                                            f"{TOP_RIGHT_BACKGROUND[1]}, {TOP_RIGHT_BACKGROUND[2]});"
+                                            f"        background-color: rgb({_TOP_RIGHT_BACKGROUND[0]}, "
+                                            f"{_TOP_RIGHT_BACKGROUND[1]}, {_TOP_RIGHT_BACKGROUND[2]});"
                                             "}"
                                             "QPushButton::hover"
                                             "{"
-                                            f"        background-color : rgb({TOP_RIGHT_HOVER[0]}, "
-                                            f"{TOP_RIGHT_HOVER[1]},"
-                                            f" {TOP_RIGHT_HOVER[2]});"
+                                            f"        background-color : rgb({_TOP_RIGHT_HOVER[0]}, "
+                                            f"{_TOP_RIGHT_HOVER[1]},"
+                                            f" {_TOP_RIGHT_HOVER[2]});"
                                             "}")
         self._topRightButtons.setFrameShape(QtWidgets.QFrame.StyledPanel)
         self._topRightButtons.setFrameShadow(QtWidgets.QFrame.Raised)
@@ -185,13 +201,13 @@ class UiZipPer(QMainWindow):
         self._horizontalLayout_4.addWidget(self._maximizeButton)
         self._closeButton.setStyleSheet("QPushButton{"
                                         "        border-radius: 5;"
-                                        f"        background-color: rgb({TOP_RIGHT_BACKGROUND[0]}, "
-                                        f"{TOP_RIGHT_BACKGROUND[1]}, {TOP_RIGHT_BACKGROUND[2]});"
+                                        f"        background-color: rgb({_TOP_RIGHT_BACKGROUND[0]}, "
+                                        f"{_TOP_RIGHT_BACKGROUND[1]}, {_TOP_RIGHT_BACKGROUND[2]});"
                                         "}"
                                         "QPushButton::hover"
                                         "{"
-                                        f"    background-color: rgb({CLOSE_BUTTON_HOVER[0]}, {CLOSE_BUTTON_HOVER[1]},"
-                                        f" {CLOSE_BUTTON_HOVER[2]});"
+                                        f"    background-color: rgb({_CLOSE_BUTTON_HOVER[0]}, {_CLOSE_BUTTON_HOVER[1]},"
+                                        f" {_CLOSE_BUTTON_HOVER[2]});"
                                         "}")
         self._closeButton.setText("")
         icon3 = QtGui.QIcon()
@@ -204,8 +220,8 @@ class UiZipPer(QMainWindow):
         self._horizontalLayout.addWidget(self._topRightButtons, 0, Qt.Qt.AlignRight)
         self._verticalLayout.addWidget(self._appBar)
         self._mainBody.setMinimumSize(QtCore.QSize(0, 0))
-        self._mainBody.setStyleSheet(f"background-color: rgb({MAIN_BODY_BACKGROUND[0]}, "
-                                     f"{MAIN_BODY_BACKGROUND[1]}, {MAIN_BODY_BACKGROUND[2]});")
+        self._mainBody.setStyleSheet(f"background-color: rgb({_MAIN_BODY_BACKGROUND[0]}, "
+                                     f"{_MAIN_BODY_BACKGROUND[1]}, {_MAIN_BODY_BACKGROUND[2]});")
         self._mainBody.setFrameShape(QtWidgets.QFrame.StyledPanel)
         self._mainBody.setFrameShadow(QtWidgets.QFrame.Raised)
         self._mainBody.setObjectName("mainBody")
@@ -213,14 +229,14 @@ class UiZipPer(QMainWindow):
         self._horizontalLayout_2.setSpacing(0)
         self._horizontalLayout_2.setObjectName("horizontalLayout_2")
         self._stackedWidget.setStyleSheet("QPushButton{"
-                                          f"    background-color: rgb({BUTTON_COLOR[0]}, "
-                                          f"{BUTTON_COLOR[1]}, {BUTTON_COLOR[2]});"
+                                          f"    background-color: rgb({_BUTTON_COLOR[0]}, "
+                                          f"{_BUTTON_COLOR[1]}, {_BUTTON_COLOR[2]});"
                                           "    border-radius: 15;"
                                           "}"
                                           "QPushButton::hover"
                                           "{"
-                                          f"    background-color: rgb({BUTTON_HOVER[0]}, {BUTTON_HOVER[1]},"
-                                          f" {BUTTON_HOVER[2]});"
+                                          f"    background-color: rgb({_BUTTON_HOVER[0]}, {_BUTTON_HOVER[1]},"
+                                          f" {_BUTTON_HOVER[2]});"
                                           "}")
         self._stackedWidget.setObjectName("stackedWidget")
         self._optionButtons.setStyleSheet("")
@@ -235,56 +251,50 @@ class UiZipPer(QMainWindow):
         self._gridLayout.setHorizontalSpacing(0)
         self._gridLayout.setVerticalSpacing(6)
         self._gridLayout.setObjectName("gridLayout")
-        self._rarPack.setMinimumSize(QtCore.QSize(150, 150))
-        self._rarPack.setMaximumSize(QtCore.QSize(150, 150))
+        self._create_zip_with_compress.setMinimumSize(QtCore.QSize(150, 150))
+        self._create_zip_with_compress.setMaximumSize(QtCore.QSize(150, 150))
         font = QtGui.QFont()
         font.setPointSize(10)
-        self._rarPack.setFont(font)
-        self._rarPack.setStyleSheet("")
+        self._create_zip_with_compress.setFont(font)
+        self._create_zip_with_compress.setStyleSheet("")
         icon4 = QtGui.QIcon()
-        icon4.addPixmap(QtGui.QPixmap(":/newPrefix/ZipPerIcons/compress_and_create-depositphotos-bgremover.png"), Qt.QIcon.Normal, Qt.QIcon.Off)
-        self._rarPack.setIcon(icon4)
-        self._rarPack.setIconSize(QtCore.QSize(32, 32))
-        self._rarPack.setObjectName("rarPack")
-        self._gridLayout.addWidget(self._rarPack, 0, 0, 1, 1)
-        self._zipPack.setMinimumSize(QtCore.QSize(150, 150))
-        self._zipPack.setMaximumSize(QtCore.QSize(150, 150))
+        icon4.addPixmap(QtGui.QPixmap(":/newPrefix/ZipPerIcons/compress_and_create-depositphotos-bgremover.png"),
+                        Qt.QIcon.Normal, Qt.QIcon.Off)
+        self._create_zip_with_compress.setIcon(icon4)
+        self._create_zip_with_compress.setIconSize(QtCore.QSize(32, 32))
+        self._create_zip_with_compress.setObjectName("rarPack")
+        self._gridLayout.addWidget(self._create_zip_with_compress, 0, 0, 1, 1)
+        self._create_zip_not_compress.setMinimumSize(QtCore.QSize(150, 150))
+        self._create_zip_not_compress.setMaximumSize(QtCore.QSize(150, 150))
         font = QtGui.QFont()
         font.setPointSize(10)
-        self._zipPack.setFont(font)
-        self._zipPack.setStyleSheet("")
+        self._create_zip_not_compress.setFont(font)
+        self._create_zip_not_compress.setStyleSheet("")
         icon5 = QtGui.QIcon()
-        icon5.addPixmap(QtGui.QPixmap(":/newPrefix/ZipPerIcons/icons8-create-archive-32.png"), Qt.QIcon.Normal, Qt.QIcon.Off)
-        self._zipPack.setIcon(icon5)
-        self._zipPack.setIconSize(QtCore.QSize(32, 32))
-        self._zipPack.setObjectName("zipPack")
-        self._gridLayout.addWidget(self._zipPack, 0, 1, 1, 1)
-        self._unpack.setMinimumSize(QtCore.QSize(150, 150))
-        self._unpack.setMaximumSize(QtCore.QSize(150, 150))
+        icon5.addPixmap(QtGui.QPixmap(":/newPrefix/ZipPerIcons/icons8-create-archive-32.png"), Qt.QIcon.Normal,
+                        Qt.QIcon.Off)
+        self._create_zip_not_compress.setIcon(icon5)
+        self._create_zip_not_compress.setIconSize(QtCore.QSize(32, 32))
+        self._create_zip_not_compress.setObjectName("zipPack")
+        self._gridLayout.addWidget(self._create_zip_not_compress, 0, 1, 1, 1)
+        self._unpack_zip.setMinimumSize(QtCore.QSize(150, 150))
+        self._unpack_zip.setMaximumSize(QtCore.QSize(150, 150))
         font = QtGui.QFont()
         font.setPointSize(10)
-        self._unpack.setFont(font)
-        self._unpack.setStyleSheet("")
+        self._unpack_zip.setFont(font)
+        self._unpack_zip.setStyleSheet("")
         icon6 = QtGui.QIcon()
         icon6.addPixmap(QtGui.QPixmap(":/newPrefix/ZipPerIcons/unpack.png"), Qt.QIcon.Normal,
                         Qt.QIcon.Off)
-        self._unpack.setIcon(icon6)
-        self._unpack.setIconSize(QtCore.QSize(32, 32))
-        self._unpack.setObjectName("unpack")
-        self._gridLayout.addWidget(self._unpack, 1, 0, 1, 1)
-        self._convert.setMinimumSize(QtCore.QSize(150, 150))
-        self._convert.setMaximumSize(QtCore.QSize(150, 150))
+        self._unpack_zip.setIcon(icon6)
+        self._unpack_zip.setIconSize(QtCore.QSize(32, 32))
+        self._unpack_zip.setObjectName("unpack")
+        self._gridLayout.addWidget(self._unpack_zip, 0, 2, 1, 1)
         font = QtGui.QFont()
         font.setPointSize(10)
-        self._convert.setFont(font)
-        self._convert.setStyleSheet("")
         icon7 = QtGui.QIcon()
         icon7.addPixmap(QtGui.QPixmap(":/newPrefix/ZipPerIcons/file_change.png"), Qt.QIcon.Normal,
                         Qt.QIcon.Off)
-        self._convert.setIcon(icon7)
-        self._convert.setIconSize(QtCore.QSize(32, 32))
-        self._convert.setObjectName("convert")
-        self._gridLayout.addWidget(self._convert, 1, 1, 1, 1)
         self._verticalLayout_3.addWidget(self._buttons)
         self._bottomBar.setMinimumSize(QtCore.QSize(0, 60))
         self._bottomBar.setMaximumSize(QtCore.QSize(16777215, 60))
@@ -380,10 +390,9 @@ class UiZipPer(QMainWindow):
         _translate = QtCore.QCoreApplication.translate
         main_window.setWindowTitle(_translate("MainWindow", "MainWindow"))
         self._name.setText(_translate("MainWindow", "ZipPer"))
-        self._rarPack.setText(_translate("MainWindow", "Compression"))
-        self._zipPack.setText(_translate("MainWindow", "Not Compress"))
-        self._unpack.setText(_translate("MainWindow", "Unpack"))
-        self._convert.setText(_translate("MainWindow", "Edit"))
+        self._create_zip_with_compress.setText(_translate("MainWindow", "Compression"))
+        self._create_zip_not_compress.setText(_translate("MainWindow", "Not Compress"))
+        self._unpack_zip.setText(_translate("MainWindow", "Unpack"))
         self._addFile.setText(_translate("MainWindow", "Add"))
         self._generate.setText(_translate("MainWindow", "Generate"))
         self._delFile.setText(_translate("MainWindow", "Delete"))
@@ -393,7 +402,8 @@ class UiZipPer(QMainWindow):
         self._set_helper_convertor()
         self._stackedWidget.setCurrentIndex(0)
 
-    def _open_convertor_page(self):
+    def _set_convertor_page_with_mode(self, mode):
+        self._operating_mode = mode
         self._stackedWidget.setCurrentIndex(1)
 
     def _set_main_convertor(self):
@@ -406,171 +416,17 @@ class UiZipPer(QMainWindow):
         if self._convertor_windows.currentIndex() == 1:
             self._set_main_convertor()
 
+    def _check_and_emit_signal_to_controller(self):
+        files_list = self._main_list.get_files_path()
+        dlg = Dialog(self)
+        dlg.exec()
 
-class _HelperPage(QWidget):
-    """
-    This window show prompt for user, that it can use drag and drop, as soon as the user starts dragging the file,
-    this class sends a signal to change the window to set the main window
-    """
+        if self._operating_mode == _UNZIP:
+            for file in files_list:
+                if file.suffix != ".zip":
+                    QMessageBox.warning(self, "Error",
+                                        f"Only .ZIP files are available for unpacking, but a {str(file.suffix).upper()}"
+                                        f" file of type was found")
+                    return
 
-    on_dragging = QtCore.pyqtSignal()
-
-    def __init__(self):
-        super(_HelperPage, self).__init__(parent=None)
-        self.setAcceptDrops(True)
-
-        self.setObjectName("helper_window")
-        self._horizontalLayout_8 = QtWidgets.QHBoxLayout(self)
-        self._horizontalLayout_8.setContentsMargins(0, 0, 0, 0)
-        self._horizontalLayout_8.setSpacing(0)
-        self._horizontalLayout_8.setObjectName("horizontalLayout_8")
-        self._helper_frame = QtWidgets.QFrame(self)
-        self._helper_frame.setMinimumSize(QtCore.QSize(400, 100))
-        self._helper_frame.setMaximumSize(QtCore.QSize(400, 100))
-        self._helper_frame.setFrameShape(QtWidgets.QFrame.StyledPanel)
-        self._helper_frame.setFrameShadow(QtWidgets.QFrame.Raised)
-        self._helper_frame.setObjectName("helper_frame")
-        self._horizontalLayout_9 = QtWidgets.QHBoxLayout(self._helper_frame)
-        self._horizontalLayout_9.setContentsMargins(0, 0, 0, 0)
-        self._horizontalLayout_9.setSpacing(0)
-        self._horizontalLayout_9.setObjectName("horizontalLayout_9")
-        self._icon_helper = QtWidgets.QLabel(self._helper_frame)
-        self._icon_helper.setText("")
-        self._icon_helper.setPixmap(QtGui.QPixmap(":/newPrefix/ZipPerIcons/icons8-drag-and-drop-32.png"))
-        self._icon_helper.setObjectName("icon_helper")
-        self._horizontalLayout_9.addWidget(self._icon_helper)
-        self._text_helper = QtWidgets.QLabel(self._helper_frame)
-        font = QtGui.QFont()
-        font.setPointSize(19)
-        self._text_helper.setFont(font)
-        self._text_helper.setObjectName("text_helper")
-        self._horizontalLayout_9.addWidget(self._text_helper)
-        self._horizontalLayout_8.addWidget(self._helper_frame, 0, Qt.Qt.AlignHCenter | Qt.Qt.AlignVCenter)
-        self._text_helper.setText("Drag and Drop your files")
-
-    def dragEnterEvent(self, event):
-        self.on_dragging.emit()
-
-
-class _QCustomQWidget(QWidget):
-    """
-    Class of custom element QListWidget, has an icon and text, icon and text, the icon is selected from the system
-    for a specific file type, you can set the color of the text
-    """
-
-    def __init__(self, txt_color: list = None):
-        """
-        Initialization
-        :param txt_color: Optional parameter - text color array of 3 rgb elements, each element must be < 256.
-        """
-        super(_QCustomQWidget, self).__init__()
-
-        if txt_color and (len(txt_color) != 3 or not all(color < 256 for color in txt_color)):
-            raise Exception("Color list must have 3 elements: [red, green, blue] and they must be <= 255")
-
-        self._text_color = txt_color
-
-        self._horizontal_layout = QHBoxLayout()
-
-        self._file_name = QLabel()
-        self._file_icon = QLabel()
-
-        self._horizontal_layout.addWidget(self._file_icon, 0)
-        self._horizontal_layout.addWidget(self._file_name, 1)
-
-        self.setLayout(self._horizontal_layout)
-
-        if self._text_color:
-            red, green, blue = self._text_color
-            self._file_name.setStyleSheet(f'''
-                color: rgb({red}, {green}, {blue});
-            ''')
-        self.setStyleSheet(f"background-color: rgb({0}, {0}, {0}, {0});")  # Set alpha to null for correct view
-
-    def set_file_icon(self, path_to_file: Path):
-        """
-        Set icon from system icons
-        :param path_to_file: Way to file
-        :type path_to_file: Path
-        :return: None
-        """
-        file_info = QtCore.QFileInfo(str(path_to_file))
-
-        icon_provider = QFileIconProvider()
-        icon = icon_provider.icon(file_info)
-        pixmap = icon.pixmap(QSize(16, 16))
-        self._file_icon.setPixmap(pixmap)
-
-    def set_file_name(self, file: Path):
-        self._file_name.setText(file.name)
-
-
-class _QList(QWidget):
-    """
-    The class representing the work of QListWidget, supports the
-    drag and drop function, works together with QCustomQWidget
-    """
-    added_file = QtCore.pyqtSignal()
-
-    def __init__(self):
-        super(_QList, self).__init__(parent=None)
-        self._Path_dict = {}  # index : Path
-        self._list_widget = QListWidget(self)
-        self.setAcceptDrops(True)
-
-        self.setStyleSheet("background-color: rgb(175, 182, 190);"
-                           "border: 0px")
-        window_layout = QVBoxLayout()
-        window_layout.addWidget(self._list_widget)
-        self.setLayout(window_layout)
-
-    def get_files_path(self):
-        """
-        Return list with objects pathlib.Path
-        :return: list
-        """
-        return list(self._Path_dict.values())
-
-    def add_file(self, path_to_file: str):
-        if not path_to_file:
-            raise FileNotFoundError("Empty file path")
-
-        path = Path(path_to_file)
-
-        custom_widget = _QCustomQWidget()
-        custom_widget.set_file_name(path)
-        custom_widget.set_file_icon(path)
-
-        list_item = QListWidgetItem()
-        list_item.setSizeHint(custom_widget.sizeHint())
-
-        current_index = self._list_widget.count()
-        self._Path_dict[current_index] = path
-
-        self._list_widget.addItem(list_item)
-        self._list_widget.setItemWidget(list_item, custom_widget)
-
-        self.added_file.emit()
-
-    def delete_file(self):
-        current_row = self.get_current_row()
-        if current_row >= 0:
-            self._list_widget.takeItem(current_row)
-            self._Path_dict.pop(current_row)
-
-    def dragEnterEvent(self, event):
-        if event.mimeData().hasUrls():
-            event.accept()
-        else:
-            event.ignore()
-
-    def dropEvent(self, event):
-        files = [u.toLocalFile() for u in event.mimeData().urls()]
-        for f in files:
-            self.add_file(f)
-
-    def get_current_row(self):
-        return self._list_widget.currentRow()
-
-    def delete_all(self):
-        self._list_widget.clear()
+        self.generate_file_signal.emit(files_list, self._operating_mode)
