@@ -3,7 +3,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QWidget
 
 
-class _HelperPage(QWidget):
+class HelperPage(QWidget):
     """
     This window show prompt for user, that it can use drag and drop, as soon as the user starts dragging the file,
     this class sends a signal to change the window to set the main window
@@ -12,7 +12,7 @@ class _HelperPage(QWidget):
     on_dragging = QtCore.pyqtSignal()
 
     def __init__(self):
-        super(_HelperPage, self).__init__(parent=None)
+        super(HelperPage, self).__init__(parent=None)
         self.setAcceptDrops(True)
         self.setObjectName("helper_window")
         self._horizontalLayout_8 = QtWidgets.QHBoxLayout(self)
