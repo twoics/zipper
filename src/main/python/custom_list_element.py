@@ -3,6 +3,8 @@ from PyQt5 import QtCore
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QLabel, QFileIconProvider
 from pathlib import Path
 
+COLOR_ARRAY = [int, int, int]
+
 
 class _QCustomQWidget(QWidget):
     """
@@ -10,10 +12,10 @@ class _QCustomQWidget(QWidget):
     for a specific file type, you can set the color of the text
     """
 
-    def __init__(self, txt_color: list = None):
+    def __init__(self, txt_color: COLOR_ARRAY = None):
         """
         Initialization
-        :param txt_color: Optional parameter - text color array of 3 rgb elements, each element must be < 256.
+        :param txt_color: Optional parameter - text color: array of 3 rgb elements, each element must be < 256.
         """
         super(_QCustomQWidget, self).__init__()
 
@@ -35,9 +37,8 @@ class _QCustomQWidget(QWidget):
         if self._text_color:
             red, green, blue = self._text_color
             self._file_name.setStyleSheet(f'''
-                color: rgb({red}, {green}, {blue});
-            ''')
-        self.setStyleSheet(f"background-color: rgb({0}, {0}, {0}, {0});")  # Set alpha to null for correct view
+                color: rgb({red}, {green}, {blue});''')
+        self.setStyleSheet(f"background-color: rgb(0, 0, 0, 0);")  # Set alpha to null for correct view
 
     def set_file_icon(self, path_to_file: Path):
         """

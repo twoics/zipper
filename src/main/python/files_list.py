@@ -4,8 +4,10 @@ from PyQt5.QtWidgets import QWidget, QListWidget, QVBoxLayout, \
 from pathlib import Path
 from custom_list_element import _QCustomQWidget
 
+LIST_COLOR = [int, int, int]
 
-class _QList(QWidget):
+
+class QList(QWidget):
     """
     The class representing the work of QListWidget, supports the
     drag and drop function, works together with QCustomQWidget
@@ -13,14 +15,13 @@ class _QList(QWidget):
     added_file = QtCore.pyqtSignal()
 
     def __init__(self):
-        super(_QList, self).__init__(parent=None)
+        super(QList, self).__init__(parent=None)
         self._data_list = []
+
+        self._color_for_list_elements = None
 
         self._list_widget = QListWidget(self)
         self.setAcceptDrops(True)
-
-        self.setStyleSheet("background-color: rgb(175, 182, 190);"
-                           "border: 0px")
 
         window_layout = QVBoxLayout()
         window_layout.addWidget(self._list_widget)
@@ -35,11 +36,11 @@ class _QList(QWidget):
 
     def add_file(self, path_to_file: str):
         if not path_to_file:
-            raise FileNotFoundError("Empty file path")
+            return
 
         path = Path(path_to_file)
 
-        custom_widget = _QCustomQWidget()
+        custom_widget = _QCustomQWidget(self._color_for_list_elements)
         custom_widget.set_file_name(path)
         custom_widget.set_file_icon(path)
 
@@ -73,3 +74,11 @@ class _QList(QWidget):
     def delete_all(self):
         self._data_list.clear()
         self._list_widget.clear()
+
+    def set_stylesheet(self, colors_list: LIST_COLOR):
+        self.setStyleSheet("background-color: rgb"
+                           f"({colors_list[0]}, {colors_list[1]}, {colors_list[2]});"
+                           "border: 0px")
+
+    def set_color_for_list_elements(self, colors_list: LIST_COLOR):
+        self._color_for_list_elements = colors_list
