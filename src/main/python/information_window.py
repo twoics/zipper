@@ -2,6 +2,8 @@ from PyQt5 import Qt
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QWidget
 
+COLOR_ARRAY = [int, int, int]
+
 
 class HelperPage(QWidget):
     """
@@ -45,3 +47,10 @@ class HelperPage(QWidget):
 
     def dragEnterEvent(self, event):
         self.on_dragging.emit()
+
+    def set_text_color(self, color: COLOR_ARRAY):
+        red = color[0]
+        green = color[1]
+        blue = color[2]
+        self._text_helper.setStyleSheet(f'''
+                color: rgb({red}, {green}, {blue});''')
