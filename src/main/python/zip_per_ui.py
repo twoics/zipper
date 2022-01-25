@@ -7,6 +7,7 @@ from files_list import QList
 from path_selection_widget import PathSelectionWidget
 from pathlib import Path
 from progress_bar_ui import ProgressBarWindow
+from base import get_color_from_json, change_current_color_in_json, get_current_theme_style
 import zip_per_icons
 
 # Operation mode
@@ -18,6 +19,8 @@ FILES_LIST = list
 OPERATION_MODE = int
 DIR_TO_SAVE = Path
 NAME = str
+
+DARK_THEME = "dark"
 
 
 class UiZipPer(QMainWindow):
@@ -33,10 +36,7 @@ class UiZipPer(QMainWindow):
     FILE_LIST_WINDOW = 0
     INFORMATION_WINDOW = 1
 
-    # A signal that calls a method in the main module that changes the current theme and sets a new color for the ui
-    signal_to_change_theme = QtCore.pyqtSignal()
-
-    def __init__(self, controller_link, colors_dict):
+    def __init__(self, controller_link):
         QMainWindow.__init__(self, parent=None)
         self._operating_mode = None
         self._controller = controller_link
@@ -51,6 +51,7 @@ class UiZipPer(QMainWindow):
         self._close_button_hover = None
         self._main_body_background = None
 
+        self._theme_icon = QtGui.QIcon()
         self._central_widget = QtWidgets.QWidget(self)
         self._verticalLayout = QtWidgets.QVBoxLayout(self._central_widget)
         self._appBar = QtWidgets.QFrame(self._central_widget)
@@ -96,13 +97,14 @@ class UiZipPer(QMainWindow):
 
         self._init_slots()
 
-        self.setup_colors(colors_dict)
+        self.setup_colors()
 
         self.set_stylesheet_by_current_colors()
 
         self._setup_ui(self)
 
-    def setup_colors(self, colors_dict):
+    def setup_colors(self):
+        colors_dict = get_color_from_json()
         self._main_background_color = colors_dict["main_background_color"]
         self._button_color = colors_dict["button_color"]
         self._button_hover = colors_dict["button_hover"]
@@ -169,6 +171,18 @@ class UiZipPer(QMainWindow):
         # For Custom UI elements
         self._main_list.set_stylesheet(self._main_background_color)
         self._main_list.set_color_for_list_elements(self._app_name_color)
+        self._path_selection_widget.set_text_color(self._app_name_color)
+        self._bar_window.set_text_color(self._app_name_color)
+        self._drag_and_drop_information_window.set_text_color(self._app_name_color)
+
+        # Change icon to current color
+        if get_current_theme_style() == DARK_THEME:
+            self._theme_icon.addPixmap(QtGui.QPixmap(":/newPrefix/ZipPerIcons/icons8-sun-32.png"), Qt.QIcon.Normal,
+                                       Qt.QIcon.Off)
+        else:
+            self._theme_icon.addPixmap(QtGui.QPixmap(":/newPrefix/ZipPerIcons/icons8-moon-32.png"), Qt.QIcon.Normal,
+                                       Qt.QIcon.Off)
+        self._changeTheme.setIcon(self._theme_icon)
 
     def open_main_page(self):
         self._main_list.delete_all()
@@ -219,7 +233,6 @@ class UiZipPer(QMainWindow):
         font = QtGui.QFont()
         font.setPointSize(16)
         self._name.setFont(font)
-        self._name.setStyleSheet("")
         self._name.setObjectName("name")
         self._horizontalLayout_6.addWidget(self._name, 0, Qt.Qt.AlignRight)
         self._icon.setText("")
@@ -333,10 +346,6 @@ class UiZipPer(QMainWindow):
         self._changeTheme.setMinimumSize(QtCore.QSize(40, 40))
         self._changeTheme.setMaximumSize(QtCore.QSize(40, 40))
         self._changeTheme.setText("")
-        icon8 = QtGui.QIcon()
-        icon8.addPixmap(QtGui.QPixmap(":/newPrefix/ZipPerIcons/icons8-moon-32.png"), Qt.QIcon.Normal,
-                        Qt.QIcon.Off)
-        self._changeTheme.setIcon(icon8)
         self._changeTheme.setIconSize(QtCore.QSize(32, 32))
         self._changeTheme.setObjectName("changeTheme")
         self._horizontalLayout_7.addWidget(self._changeTheme, 0, Qt.Qt.AlignLeft)
@@ -403,10 +412,7 @@ class UiZipPer(QMainWindow):
         self._verticalLayout_2.addWidget(self._bottom)
         self._main_windows.addWidget(self._convertor)
         self._main_windows.addWidget(self._bar_window)
-
         self._main_windows.addWidget(self._path_selection_widget)
-        # TODO Here
-
         self._horizontalLayout_2.addWidget(self._main_windows)
         self._verticalLayout.addWidget(self._mainBody)
         main_window.setCentralWidget(self._central_widget)
@@ -456,7 +462,9 @@ class UiZipPer(QMainWindow):
         self._path_selection_widget.signal_to_start_convert.connect(self._emit_signal_to_start_conversion)
 
     def _change_theme(self):
-        self.signal_to_change_theme.emit()
+        change_current_color_in_json()
+        self.setup_colors()
+        self.set_stylesheet_by_current_colors()
 
     def _check_files_list_by_empty(self, files_list: list):
         if len(files_list) == 0:
@@ -477,8 +485,9 @@ class UiZipPer(QMainWindow):
     def _emit_signal_to_start_conversion(self, result_dir: Path, name: str) -> None:
         self._main_windows.setCurrentIndex(self.PROGRESS_OF_PROCESSED_FILES_WINDOW)
         files_list = self._main_list.get_files_path()
+
+        # Start file processing
         self._controller.run(files_list, self._operating_mode, result_dir, name)
-        # self.signal_to_start_conversion.emit(files_list, self._operating_mode, result_dir, name)
 
     def _open_path_selection_widget(self):
         files_list = self._main_list.get_files_path()

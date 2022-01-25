@@ -2,63 +2,73 @@ from PyQt5.QtWidgets import QWidget
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import Qt
 
+COLOR_ARRAY = [int, int, int]
+
 
 class ProgressBarWindow(QWidget):
 
     def __init__(self):
         super().__init__()
-        self.verticalLayout = QtWidgets.QVBoxLayout(self)
-        self.frame = QtWidgets.QFrame(self)
-        self.verticalLayout_2 = QtWidgets.QVBoxLayout(self.frame)
-        self.information_text = QtWidgets.QLabel(self.frame)
-        self.progress_bar = QtWidgets.QProgressBar(self.frame)
-        self.label = QtWidgets.QLabel(self)
+        self._verticalLayout = QtWidgets.QVBoxLayout(self)
+        self._frame = QtWidgets.QFrame(self)
+        self._verticalLayout_2 = QtWidgets.QVBoxLayout(self._frame)
+        self._information_text = QtWidgets.QLabel(self._frame)
+        self._progress_bar = QtWidgets.QProgressBar(self._frame)
+        self._label = QtWidgets.QLabel(self)
 
         self._setup_ui()
-        self.set_stylesheet()
+        self._set_stylesheet()
 
     def set_progress_value(self, value: int) -> None:
-        self.progress_bar.setValue(value)
+        self._progress_bar.setValue(value)
 
-    def set_stylesheet(self):
-        self.setStyleSheet("QProgressBar{\n"
-                           "    border: solid black;\n"
-                           "    border-radius: 15px;\n"
-                           "    color: black;\n"
-                           "}\n"
-                           "\n"
-                           "QProgressBar::chunk{\n"
-                           "    border-radius : 15px;\n"
-                           "    background-color: rgb(87, 182, 225);\n"
+    def set_text_color(self, color: COLOR_ARRAY):
+        red = color[0]
+        green = color[1]
+        blue = color[2]
+        self._label.setStyleSheet(f'''
+                color: rgb({red}, {green}, {blue});''')
+        self._information_text.setStyleSheet(f'''
+                        color: rgb({red}, {green}, {blue});''')
+
+    def _set_stylesheet(self):
+        self.setStyleSheet("QProgressBar{"
+                           "    border: solid black;"
+                           "    border-radius: 15px;"
+                           "    color: black;"
+                           "}"
+                           "QProgressBar::chunk{"
+                           "    border-radius : 15px;"
+                           "    background-color: rgb(87, 182, 225);"
                            "}")
 
     def _setup_ui(self):
         self.setObjectName("Form")
         self.resize(892, 623)
-        self.verticalLayout.setContentsMargins(-1, 11, -1, 30)
-        self.verticalLayout.setObjectName("verticalLayout")
-        self.frame.setFrameShape(QtWidgets.QFrame.StyledPanel)
-        self.frame.setFrameShadow(QtWidgets.QFrame.Raised)
-        self.frame.setObjectName("frame")
-        self.verticalLayout_2.setObjectName("verticalLayout_2")
+        self._verticalLayout.setContentsMargins(-1, 11, -1, 30)
+        self._verticalLayout.setObjectName("verticalLayout")
+        self._frame.setFrameShape(QtWidgets.QFrame.StyledPanel)
+        self._frame.setFrameShadow(QtWidgets.QFrame.Raised)
+        self._frame.setObjectName("frame")
+        self._verticalLayout_2.setObjectName("verticalLayout_2")
         font = QtGui.QFont()
         font.setPointSize(16)
-        self.information_text.setFont(font)
-        self.information_text.setAlignment(Qt.AlignCenter)
-        self.information_text.setObjectName("information_text")
-        self.verticalLayout_2.addWidget(self.information_text, 0, Qt.AlignBottom)
-        self.progress_bar.setMinimumSize(QtCore.QSize(40, 40))
-        self.progress_bar.setProperty("value", 0)
-        self.progress_bar.setAlignment(Qt.AlignCenter)
-        self.progress_bar.setObjectName("progress_bar")
-        self.verticalLayout_2.addWidget(self.progress_bar)
-        self.verticalLayout.addWidget(self.frame)
+        self._information_text.setFont(font)
+        self._information_text.setAlignment(Qt.AlignCenter)
+        self._information_text.setObjectName("information_text")
+        self._verticalLayout_2.addWidget(self._information_text, 0, Qt.AlignBottom)
+        self._progress_bar.setMinimumSize(QtCore.QSize(40, 40))
+        self._progress_bar.setProperty("value", 0)
+        self._progress_bar.setAlignment(Qt.AlignCenter)
+        self._progress_bar.setObjectName("progress_bar")
+        self._verticalLayout_2.addWidget(self._progress_bar)
+        self._verticalLayout.addWidget(self._frame)
         font = QtGui.QFont()
         font.setPointSize(16)
-        self.label.setFont(font)
-        self.label.setAlignment(Qt.AlignCenter)
-        self.label.setObjectName("label")
-        self.verticalLayout.addWidget(self.label, 0, Qt.AlignBottom)
+        self._label.setFont(font)
+        self._label.setAlignment(Qt.AlignCenter)
+        self._label.setObjectName("label")
+        self._verticalLayout.addWidget(self._label, 0, Qt.AlignBottom)
 
         self._translate()
         QtCore.QMetaObject.connectSlotsByName(self)
@@ -66,6 +76,6 @@ class ProgressBarWindow(QWidget):
     def _translate(self):
         _translate = QtCore.QCoreApplication.translate
         self.setWindowTitle(_translate("Form", "Form"))
-        self.information_text.setText(_translate("Form", "File processing progress"))
-        self.progress_bar.setFormat(_translate("Form", "%p%"))
-        self.label.setText(_translate("Form", "Thanks for using ZipPer"))
+        self._information_text.setText(_translate("Form", "File processing progress"))
+        self._progress_bar.setFormat(_translate("Form", "%p%"))
+        self._label.setText(_translate("Form", "Thanks for using ZipPer"))

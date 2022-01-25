@@ -30,7 +30,7 @@ class FileConvertor(QtCore.QObject):
         :param compression: Archive compression flag
         :return: None
         """
-        result_dir = "C:/test/" + archive_name + ".zip"
+        result_dir = "D:/test_folder/" + archive_name + ".zip"
         # TODO Change here
 
         self._total_files_size = _get_total_size(path_files_to_convert)
