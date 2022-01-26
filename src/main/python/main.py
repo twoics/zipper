@@ -1,4 +1,4 @@
-"""This module is the entry point, and represents the application logic"""
+"""This module is the entry point"""
 from PyQt5 import QtCore
 from zip_per_ui import UiZipPer
 from controller import Controller
@@ -7,6 +7,8 @@ import sys
 
 
 class Main:
+    """A class that gathers the main components of the application into one"""
+
     def __init__(self):
         self._thread = QtCore.QThread()
         self._controller = Controller()
@@ -16,9 +18,9 @@ class Main:
         self._window_UI.show()
 
         self._thread.start()
-        self._slots()
+        self._init_slots()
 
-    def _slots(self):
+    def _init_slots(self):
         self._controller.finished.connect(self._get_controller_result)
 
     def _get_controller_result(self):

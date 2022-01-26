@@ -1,3 +1,4 @@
+"""Module containing a link to the UA and functions for working with resources"""
 from fbs_runtime.application_context.PyQt5 import ApplicationContext
 from typing import Union
 import json
@@ -8,7 +9,11 @@ DARK_THEME = "dark"
 BASE_CONTEXT = ApplicationContext()
 
 
-def get_color_from_json() -> dict:
+def get_current_colors_from_json() -> dict:
+    """
+    Return colors for current theme-style
+    :return: dict with colors from json
+    """
     with open(BASE_CONTEXT.get_resource("color_data.json")) as json_file:
         json_dict = json.load(json_file)
         style_type = json_dict['style']
@@ -19,7 +24,11 @@ def get_color_from_json() -> dict:
     return result_dict
 
 
-def change_current_color_in_json() -> None:
+def change_current_theme_in_json() -> None:
+    """
+    Changes the current theme to another: dark to light and vice versa
+    :return: None
+    """
     # Replace color-style in json
     with open(BASE_CONTEXT.get_resource("color_data.json")) as json_file:
         data = json.load(json_file)

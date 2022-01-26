@@ -1,20 +1,27 @@
+"""The module represents a widget for selecting the file/folder name and directory where it will be saved
+Send signal to start conversion"""
+
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QWidget
 from pathlib import Path
 from PyQt5.QtWidgets import QMessageBox
+from typing import Tuple
 
 COLOR_ARRAY = [int, int, int]
+DIRECTORY = str
+NAME = str
+PATH = Path
+
+EMPTY_FIELD = ""
+
+SET_SYMBOLS_ORD = {33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47,
+                   58, 59, 60, 61, 62, 63, 64, 91, 92, 93, 94, 95, 96, 123, 124, 125, 126}
+INVALID_SYMBOLS = {"<", ">", ":", '"', "/", "\\", "|", "?", "*"}
 
 
 class PathSelectionWidget(QWidget):
-    EMPTY_FIELD = ""
-    SET_SYMBOLS_ORD = {33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47,
-                       58, 59, 60, 61, 62, 63, 64, 91, 92, 93, 94, 95, 96, 123, 124, 125, 126}
-    INVALID_SYMBOLS = {"<", ">", ":", '"', "/", "\\", "|", "?", "*"}
-
-    NAME = str
-    PATH = Path
+    """Widget Class, If all fields are filled without problems, it sends a signal to start working"""
 
     signal_to_start_convert = QtCore.pyqtSignal(PATH, NAME)
 
@@ -35,9 +42,14 @@ class PathSelectionWidget(QWidget):
 
         self._pushButton_2.clicked.connect(self._emit_signal)
 
-        self._setup_ui(self)
+        self._setup_ui()
 
-    def set_text_color(self, color: COLOR_ARRAY):
+    def set_text_color(self, color: COLOR_ARRAY) -> None:
+        """
+        Set colors for hints and input fields on widget
+        :param color: Color to set
+        :return: None
+        """
         red = color[0]
         green = color[1]
         blue = color[2]
@@ -53,29 +65,34 @@ class PathSelectionWidget(QWidget):
                                      "     selection-background-color: darkgray;"
                                      " }")
 
-    def _setup_ui(self, widget):
-        widget.setObjectName("Form")
-        widget.resize(921, 624)
-        widget.setStyleSheet("QProgressBar{\n"
-                             "    border: solid black;\n"
-                             "    border-radius: 15px;\n"
-                             "    color: black;\n"
-                             "}\n"
-                             "\n"
-                             "QProgressBar::chunk{\n"
-                             "    border-radius : 15px;\n"
-                             "    background-color: rgb(87, 182, 225);\n"
-                             "}"
-                             "QMessageBox{"
-                             "  background-color: rgb(255, 255, 255);"
-                             "}"
-                             "QMessageBox QLabel {"
-                             "  color: rgb(0, 0, 0);"
-                             "  background-color: rgb(255, 255, 255);"
-                             "}"
-                             "QMessageBox QPushButton {"
-                             " background-color: rgb(255, 255, 255);"
-                             "}")
+    def clear_input_filed(self) -> None:
+        self._lineEdit.setText("")
+
+    def _setup_ui(self) -> None:
+        """Setting UI"""
+
+        self.setObjectName("Form")
+        self.resize(921, 624)
+        self.setStyleSheet("QProgressBar{\n"
+                           "    border: solid black;\n"
+                           "    border-radius: 15px;\n"
+                           "    color: black;\n"
+                           "}\n"
+                           "\n"
+                           "QProgressBar::chunk{\n"
+                           "    border-radius : 15px;\n"
+                           "    background-color: rgb(87, 182, 225);\n"
+                           "}"
+                           "QMessageBox{"
+                           "  background-color: rgb(255, 255, 255);"
+                           "}"
+                           "QMessageBox QLabel {"
+                           "  color: rgb(0, 0, 0);"
+                           "  background-color: rgb(255, 255, 255);"
+                           "}"
+                           "QMessageBox QPushButton {"
+                           " background-color: rgb(255, 255, 255);"
+                           "}")
         self._verticalLayout.setContentsMargins(-1, 11, -1, 30)
         self._verticalLayout.setObjectName("verticalLayout")
         self._input_name_frame.setFrameShape(QtWidgets.QFrame.StyledPanel)
@@ -121,32 +138,45 @@ class PathSelectionWidget(QWidget):
         self._verticalLayout_3.addWidget(self._pushButton_2, 0, Qt.AlignHCenter)
         self._verticalLayout.addWidget(self._frame, 0, Qt.AlignVCenter)
 
-        self._translate(widget)
-        QtCore.QMetaObject.connectSlotsByName(widget)
+        self._translate(self)
+        QtCore.QMetaObject.connectSlotsByName(self)
 
-    def _translate(self, widget):
+    def _translate(self, widget) -> None:
         _translate = QtCore.QCoreApplication.translate
         widget.setWindowTitle(_translate("Form", "Form"))
         self._information_text.setText(_translate("Form", "Enter what the result will be named"))
         self._label.setText(_translate("Form", "Select the directory to save the result"))
         self._pushButton_2.setText(_translate("Form", "Choose and start"))
 
-    def _get_data_from_all_fields(self):
-        self._result_dir = QtWidgets.QFileDialog.getExistingDirectory()
-        self._result_name = self._lineEdit.text()
+    def _get_data_from_all_fields(self) -> Tuple[DIRECTORY, NAME]:
+        return QtWidgets.QFileDialog.getExistingDirectory(), self._lineEdit.text()
 
-    def _check_ui_fields(self):
-        if self._result_name is self.EMPTY_FIELD or self._result_dir is self.EMPTY_FIELD:
+    def _check_ui_fields(self) -> bool:
+        """
+        Checks the name and path, if there are no problems returns True otherwise False
+        :return: True or False
+        """
+        if self._result_name is EMPTY_FIELD or self._result_dir is EMPTY_FIELD:
             return False
-        if len(self._result_name) == 1 and self._result_name in self.SET_SYMBOLS_ORD:
+        if len(self._result_name) == 1 and self._result_name in SET_SYMBOLS_ORD:
             return False
         # Are there any forbidden characters in the name
-        if set(self._result_name).intersection(self.INVALID_SYMBOLS):
+        if set(self._result_name).intersection(INVALID_SYMBOLS):
             return False
+
+        path = Path(self._result_dir)
+        for file in path.iterdir():
+            if file.stem == self._result_name:
+                return False
         return True
 
-    def _emit_signal(self):
-        self._get_data_from_all_fields()
+    def _emit_signal(self) -> QtCore.pyqtSignal():
+        """
+        If the fields are filled without problems, then it sends a signal ("signal_to_start_convert") to start working
+        :return: Signal or None
+        """
+        self._result_dir, self._result_name = self._get_data_from_all_fields()
+        self.clear_input_filed()
         if self._check_ui_fields():
             self.signal_to_start_convert.emit(Path(self._result_dir), self._result_name)
         else:
