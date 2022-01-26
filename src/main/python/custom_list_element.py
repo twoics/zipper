@@ -1,3 +1,4 @@
+"""This module implements an element for a list of files"""
 from PyQt5.QtCore import QSize
 from PyQt5 import QtCore
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QLabel, QFileIconProvider
@@ -40,7 +41,7 @@ class _QCustomQWidget(QWidget):
                 color: rgb({red}, {green}, {blue});''')
         self.setStyleSheet(f"background-color: rgb(0, 0, 0, 0);")  # Set alpha to null for correct view
 
-    def set_file_icon(self, path_to_file: Path):
+    def set_file_icon(self, path_to_file: Path) -> None:
         """
         Set icon from system icons
         :param path_to_file: Way to file
@@ -54,5 +55,5 @@ class _QCustomQWidget(QWidget):
         pixmap = icon.pixmap(QSize(16, 16))
         self._file_icon.setPixmap(pixmap)
 
-    def set_file_name(self, file: Path):
+    def set_file_name(self, file: Path) -> None:
         self._file_name.setText(file.name)

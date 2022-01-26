@@ -1,4 +1,4 @@
-"""This module is for converting files"""
+"""This module is for converting files, main logic"""
 import zipfile
 import os
 from PyQt5 import QtCore
@@ -20,11 +20,11 @@ class FileConvertor(QtCore.QObject):
         self._size_processed_files = 0
 
     def zip_convert(self, path_files_to_convert: PATH_LIST, result_dir: Path, archive_name: str,
-                    compression: bool = True):
+                    compression: bool = True) -> None:
         """
         This method converts the list of files into a zip archive, and compresses it.
         Also, at runtime, it sends a process percent signal with the value of the number of processed files (in percent)
-        :param path_files_to_convert: List with path to files (Using pathlib)
+        :param path_files_to_convert: List with path to files
         :param result_dir: Directory where to save the archive
         :param archive_name: The name to be assigned to the archive
         :param compression: Archive compression flag
@@ -56,13 +56,13 @@ class FileConvertor(QtCore.QObject):
         self._total_files_size = 0
         self._size_processed_files = 0
 
-    def unzip_archives(self, list_archives_paths, result_dir, result_folder_name):
+    def unzip_archives(self, list_archives_paths: PATH_LIST, result_dir: Path, result_folder_name: str) -> None:
         """
         Unpacks a .zip archive into the specified directory
         Also, at runtime, it sends a signal - the percentage of converted files
-        :param list_archives_paths:
-        :param result_dir:
-        :param result_folder_name:
+        :param list_archives_paths: List with path to files
+        :param result_dir: Directory where to save the folder
+        :param result_folder_name: Folder name
         :return: None
         """
         total_files = len(list_archives_paths)
@@ -78,7 +78,14 @@ class FileConvertor(QtCore.QObject):
                     self.process_percent.emit((processed_archives / total_files) * 100)
 
 
-def _write_file(path_to_file: Path, archive: zipfile.ZipFile, folder_path: Path = None):
+def _write_file(path_to_file: Path, archive: zipfile.ZipFile, folder_path: Path = None) -> None:
+    """
+    Write file into archive
+    :param path_to_file: Path to file
+    :param archive: Archive to write the file to
+    :param folder_path: Path to the parent directory, if any
+    :return: None
+    """
     index = path_to_file.parts.index(folder_path.name) if folder_path \
         else path_to_file.parts.index(path_to_file.name)
 
@@ -86,7 +93,12 @@ def _write_file(path_to_file: Path, archive: zipfile.ZipFile, folder_path: Path 
     archive.write(path_to_file, path_without_root)  # Write nested path without root
 
 
-def _get_total_size(path_files_to_convert: PATH_LIST):
+def _get_total_size(path_files_to_convert: PATH_LIST) -> int:
+    """
+    Return total size of files to convert
+    :param path_files_to_convert: List with files
+    :return: total size
+    """
     total_size = 0
     for path in path_files_to_convert:
         for nested_paths in path.glob('**/*'):

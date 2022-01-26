@@ -1,3 +1,4 @@
+"""The module represents the progress bar widget"""
 from PyQt5.QtWidgets import QWidget
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import Qt
@@ -6,6 +7,8 @@ COLOR_ARRAY = [int, int, int]
 
 
 class ProgressBarWindow(QWidget):
+    """Bar progress class, sets the bar progress value
+    from the main UI module, which receives the value from the controller module signal"""
 
     def __init__(self):
         super().__init__()
@@ -22,7 +25,8 @@ class ProgressBarWindow(QWidget):
     def set_progress_value(self, value: int) -> None:
         self._progress_bar.setValue(value)
 
-    def set_text_color(self, color: COLOR_ARRAY):
+    def set_text_color(self, color: COLOR_ARRAY) -> None:
+        """Set text color by transferred color"""
         red = color[0]
         green = color[1]
         blue = color[2]
@@ -31,7 +35,7 @@ class ProgressBarWindow(QWidget):
         self._information_text.setStyleSheet(f'''
                         color: rgb({red}, {green}, {blue});''')
 
-    def _set_stylesheet(self):
+    def _set_stylesheet(self) -> None:
         self.setStyleSheet("QProgressBar{"
                            "    border: solid black;"
                            "    border-radius: 15px;"
@@ -42,7 +46,8 @@ class ProgressBarWindow(QWidget):
                            "    background-color: rgb(87, 182, 225);"
                            "}")
 
-    def _setup_ui(self):
+    def _setup_ui(self) -> None:
+        """Setting UI"""
         self.setObjectName("Form")
         self.resize(892, 623)
         self._verticalLayout.setContentsMargins(-1, 11, -1, 30)
@@ -73,7 +78,7 @@ class ProgressBarWindow(QWidget):
         self._translate()
         QtCore.QMetaObject.connectSlotsByName(self)
 
-    def _translate(self):
+    def _translate(self) -> None:
         _translate = QtCore.QCoreApplication.translate
         self.setWindowTitle(_translate("Form", "Form"))
         self._information_text.setText(_translate("Form", "File processing progress"))
