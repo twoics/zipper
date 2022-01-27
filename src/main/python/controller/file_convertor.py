@@ -7,6 +7,7 @@ from typing import List
 
 FOLDER_SUFFIX = ''
 PATH_LIST = List[Path]
+ZIP = ".zip"
 
 
 class FileConvertor(QtCore.QObject):
@@ -30,10 +31,15 @@ class FileConvertor(QtCore.QObject):
         :param compression: Archive compression flag
         :return: None
         """
-        result_dir = "D:/test_folder/" + archive_name + ".zip"
-        # TODO Change here
+        # This is necessary because open expects a str type
+        result_dir = str(Path.joinpath(result_dir, archive_name + ZIP))
 
         self._total_files_size = _get_total_size(path_files_to_convert)
+
+        # For prevent division by zero
+        if self._total_files_size == 0:
+            self._total_files_size = 1
+            self._size_processed_files = 1
 
         # Compression mode difference - compress or not compress
         z_archive = zipfile.ZipFile(result_dir, 'w', zipfile.ZIP_DEFLATED) if compression else \
@@ -68,12 +74,17 @@ class FileConvertor(QtCore.QObject):
         total_files = len(list_archives_paths)
         processed_archives = 0
         for path_to_archive in list_archives_paths:
+            # This is necessary because open expects a str type
+            path_to_archive = str(path_to_archive)
             with zipfile.ZipFile(path_to_archive, "r") as zip_file:
-                path_list = zip_file.namelist()
-                for file_path in path_list:
-                    print("-")
-                    zip_file.extract(file_path, "D:/test_folder/" + result_folder_name)
-                    # TODO Change here
+                files_info_list = zip_file.infolist()
+                for info_about_file in files_info_list:
+                    # This is necessary for correct work with files/folders named with Russian letters
+                    # because when working with folders/files named with Russian letters,
+                    # they are incorrectly encoded and random unicode characters are obtained
+                    info_about_file.filename = info_about_file.filename.encode('cp437').decode('cp866')
+
+                    zip_file.extract(info_about_file, str(Path.joinpath(result_dir, result_folder_name)))
                     processed_archives += 1
                     self.process_percent.emit((processed_archives / total_files) * 100)
 

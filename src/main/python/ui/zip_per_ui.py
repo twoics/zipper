@@ -2,14 +2,15 @@
 from PyQt5 import Qt, QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QFileDialog, QMessageBox
 from PyQt5.QtWidgets import QMainWindow
-from information_window import HintPage
-from files_list import QList
-from path_selection_widget import PathSelectionWidget
-from pathlib import Path
-from progress_bar_ui import ProgressBarWindow
 from typing import List
-from base import get_current_colors_from_json, change_current_theme_in_json, get_current_theme_style
-import zip_per_icons
+from pathlib import Path
+from src.main.python.ui.information_window import HintPage
+from src.main.python.ui.files_list import QList
+from src.main.python.ui.path_selection_widget import PathSelectionWidget
+from src.main.python.ui.progress_bar_ui import ProgressBarWindow
+from src.main.python.model.base import get_current_colors_from_json, change_current_theme_in_json, \
+    get_current_theme_style
+import src.main.python.ui.zip_per_icons
 
 # Operation mode
 CREATE_ZIP_WITH_COMPRESS = 1
@@ -101,11 +102,16 @@ class UiZipPer(QMainWindow):
 
         self._setup_ui()
 
-    def open_main_page(self) -> None:
-        self._main_list.delete_all()
-        self._path_selection_widget.clear_input_filed()
+    def open_main_window_after_shutdown(self) -> None:
+        self._clear_all_fields()
         self._windows_for_working_with_files.setCurrentIndex(INFORMATION_WINDOW)
         self._main_windows.setCurrentIndex(OPERATION_MODE_SELECTION_WINDOW)
+
+    def _open_main_page_by_button_click(self) -> None:
+        if self._main_windows.currentIndex() != PROGRESS_OF_PROCESSED_FILES_WINDOW:
+            self._clear_all_fields()
+            self._windows_for_working_with_files.setCurrentIndex(INFORMATION_WINDOW)
+            self._main_windows.setCurrentIndex(OPERATION_MODE_SELECTION_WINDOW)
 
     def mousePressEvent(self, event: QtGui.QMouseEvent) -> None:
         self.click_position = event.globalPos()
@@ -116,7 +122,7 @@ class UiZipPer(QMainWindow):
 
         self._main_list.added_file.connect(self._update_window)
 
-        self._back_button.clicked.connect(self.open_main_page)
+        self._back_button.clicked.connect(self._open_main_page_by_button_click)
 
         self._changeTheme.clicked.connect(self._change_theme)
 
@@ -237,6 +243,10 @@ class UiZipPer(QMainWindow):
             self._theme_icon.addPixmap(QtGui.QPixmap(":/newPrefix/ZipPerIcons/icons8-moon-32.png"), Qt.QIcon.Normal,
                                        Qt.QIcon.Off)
         self._changeTheme.setIcon(self._theme_icon)
+
+    def _clear_all_fields(self) -> None:
+        self._main_list.delete_all()
+        self._path_selection_widget.clear_input_filed()
 
     def _maximize_or_restore(self) -> None:
         if self.isMaximized():
