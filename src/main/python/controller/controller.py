@@ -1,8 +1,8 @@
 """This module controls the whole process, it performs file conversion"""
 from pathlib import Path
 from PyQt5 import QtCore
-from file_convertor import FileConvertor
 from typing import List
+from src.main.python.controller.file_convertor import FileConvertor
 
 # Operation mode
 CREATE_ZIP_WITH_COMPRESS = 1
@@ -12,8 +12,6 @@ UNZIP = 3
 PERCENT_COUNT = int
 PATH_LIST = List[Path]
 
-
-# TODO Division by zero
 
 class Controller(QtCore.QObject):
     """This class represents the main logic control controller"""
@@ -37,11 +35,11 @@ class Controller(QtCore.QObject):
         :return: Send signal when the inverter finishes running
         """
         if operation_mode == CREATE_ZIP_WITH_COMPRESS:
-            self._convertor.zip_convert(file_list, Path("None"), "Aboba", compression=True)
+            self._convertor.zip_convert(file_list, directory, name, compression=True)
         elif operation_mode == CREATE_ZIP_NOT_COMPRESS:
-            pass
+            self._convertor.zip_convert(file_list, directory, name, compression=False)
         else:
-            self._convertor.unzip_archives(["D:/test_folder/Aboba.zip", "D:/test_folder/1.zip"], None, "aboba")
+            self._convertor.unzip_archives(file_list, directory, name)
         self.finished.emit()
 
     def _init_slots(self) -> None:

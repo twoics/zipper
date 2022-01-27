@@ -1,4 +1,5 @@
 """The module represents a hint widget for the user"""
+
 from PyQt5 import Qt
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QWidget

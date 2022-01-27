@@ -1,4 +1,5 @@
 """The module represents the progress bar widget"""
+
 from PyQt5.QtWidgets import QWidget
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import Qt

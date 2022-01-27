@@ -1,10 +1,9 @@
 """This module presents a list of files to be converted"""
 from PyQt5 import QtCore
-from PyQt5.QtWidgets import QWidget, QListWidget, QVBoxLayout, \
-    QListWidgetItem
+from PyQt5.QtWidgets import QWidget, QListWidget, QVBoxLayout, QListWidgetItem
 from pathlib import Path
-from custom_list_element import _QCustomQWidget
 from typing import List, Union
+from src.main.python.ui.custom_list_element import _QCustomQWidget
 
 LIST_COLOR = [int, int, int]
 LIST_PATHS = List[Path]
