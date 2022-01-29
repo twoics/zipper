@@ -1,8 +1,12 @@
 """This module implements an element for a list of files"""
-from PyQt5.QtCore import QSize
-from PyQt5 import QtCore
-from PyQt5.QtWidgets import QWidget, QHBoxLayout, QLabel, QFileIconProvider
+
+# Standard library imports
 from pathlib import Path
+
+# Third party imports
+from PyQt5 import QtCore
+from PyQt5.QtCore import QSize
+from PyQt5.QtWidgets import QWidget, QHBoxLayout, QLabel, QFileIconProvider
 
 COLOR_ARRAY = [int, int, int]
 

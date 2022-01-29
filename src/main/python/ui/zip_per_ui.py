@@ -1,16 +1,21 @@
 """This module is the UI of the application, all the main widgets are located here."""
-from PyQt5 import Qt, QtCore, QtGui, QtWidgets
-from PyQt5.QtWidgets import QFileDialog, QMessageBox
-from PyQt5.QtWidgets import QMainWindow
+
+# Standard library imports
 from typing import List
 from pathlib import Path
-from src.main.python.ui.information_window import HintPage
-from src.main.python.ui.files_list import QList
-from src.main.python.ui.path_selection_widget import PathSelectionWidget
-from src.main.python.ui.progress_bar_ui import ProgressBarWindow
-from src.main.python.model.base import get_current_colors_from_json, change_current_theme_in_json, \
-    get_current_theme_style
-import src.main.python.ui.zip_per_icons
+
+# Third party imports
+from PyQt5.QtWidgets import QMainWindow
+from PyQt5 import Qt, QtCore, QtGui, QtWidgets
+from PyQt5.QtWidgets import QFileDialog, QMessageBox
+
+# Local application imports
+from .files_list import QList
+from .information_window import HintPage
+from .progress_bar_ui import ProgressBarWindow
+from .path_selection_widget import PathSelectionWidget
+from . import zip_per_icons  # Don't remove it, it is an icon import
+from model.base import get_current_colors_from_json, change_current_theme_in_json, get_current_theme_style
 
 # Operation mode
 CREATE_ZIP_WITH_COMPRESS = 1
@@ -107,14 +112,14 @@ class UiZipPer(QMainWindow):
         self._windows_for_working_with_files.setCurrentIndex(INFORMATION_WINDOW)
         self._main_windows.setCurrentIndex(OPERATION_MODE_SELECTION_WINDOW)
 
+    def mousePressEvent(self, event: QtGui.QMouseEvent) -> None:
+        self.click_position = event.globalPos()
+
     def _open_main_page_by_button_click(self) -> None:
         if self._main_windows.currentIndex() != PROGRESS_OF_PROCESSED_FILES_WINDOW:
             self._clear_all_fields()
             self._windows_for_working_with_files.setCurrentIndex(INFORMATION_WINDOW)
             self._main_windows.setCurrentIndex(OPERATION_MODE_SELECTION_WINDOW)
-
-    def mousePressEvent(self, event: QtGui.QMouseEvent) -> None:
-        self.click_position = event.globalPos()
 
     def _init_slots(self) -> None:
         """Connects signals and slots"""

@@ -1,8 +1,14 @@
 """This module controls the whole process, it performs file conversion"""
-from pathlib import Path
-from PyQt5 import QtCore
+
+# Standard library imports
 from typing import List
-from src.main.python.controller.file_convertor import FileConvertor
+from pathlib import Path
+
+# Third party imports
+from PyQt5 import QtCore
+
+# Local application imports
+from .file_convertor import FileConvertor
 
 # Operation mode
 CREATE_ZIP_WITH_COMPRESS = 1
@@ -15,7 +21,7 @@ PATH_LIST = List[Path]
 
 class Controller(QtCore.QObject):
     """This class represents the main logic control controller"""
-    # A signal is sent to the main when the inverter finishes running
+    # A signal is sent to the main when the converter finishes running
     finished = QtCore.pyqtSignal()
     # A signal is sent to the UI during work each time the amount of work done has been updated.
     percent_count = QtCore.pyqtSignal(PERCENT_COUNT)
@@ -38,7 +44,7 @@ class Controller(QtCore.QObject):
             self._convertor.zip_convert(file_list, directory, name, compression=True)
         elif operation_mode == CREATE_ZIP_NOT_COMPRESS:
             self._convertor.zip_convert(file_list, directory, name, compression=False)
-        else:
+        else:  # UNZIP
             self._convertor.unzip_archives(file_list, directory, name)
         self.finished.emit()
 

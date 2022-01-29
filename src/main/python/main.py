@@ -1,11 +1,16 @@
 """This module is the entry point"""
 
+# Standard library imports
+import sys
+
+# Third party imports
 from PyQt5 import QtCore
 from PyQt5.QtCore import QTimer
-from src.main.python.ui.zip_per_ui import UiZipPer
-from src.main.python.controller.controller import Controller
-from src.main.python.model.base import BASE_CONTEXT
-import sys
+
+# Local application imports
+from ui.zip_per_ui import UiZipPer
+from controller.controller import Controller
+from model.base import BASE_CONTEXT
 
 WAITING_TIME = 1000  # How long the app waits after shutdown to switch to the home screen (ms)
 

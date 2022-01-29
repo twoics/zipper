@@ -1,7 +1,11 @@
-"""Module containing a link to the UA and functions for working with resources"""
-from fbs_runtime.application_context.PyQt5 import ApplicationContext
-from typing import Union
+"""Module containing a link to the Application Context and functions for working with resources"""
+
+# Standard library imports
 import json
+from typing import Union
+
+# Third party imports
+from fbs_runtime.application_context.PyQt5 import ApplicationContext
 
 LIGHT_THEME = "light"
 DARK_THEME = "dark"
