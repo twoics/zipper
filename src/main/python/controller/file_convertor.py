@@ -1,9 +1,13 @@
 """This module is for converting files, main logic"""
-import zipfile
+
+# Standard library imports
 import os
-from PyQt5 import QtCore
-from pathlib import Path
+import zipfile
 from typing import List
+from pathlib import Path
+
+# Third party imports
+from PyQt5 import QtCore
 
 FOLDER_SUFFIX = ''
 PATH_LIST = List[Path]

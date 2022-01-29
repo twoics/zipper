@@ -1,12 +1,15 @@
 """The module represents a widget for selecting the file/folder name and directory where it will be saved
 Send signal to start conversion"""
 
-from PyQt5 import QtCore, QtGui, QtWidgets
+# Standard library imports
+from typing import Tuple
+from pathlib import Path
+
+# Third party imports
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QWidget
-from pathlib import Path
 from PyQt5.QtWidgets import QMessageBox
-from typing import Tuple
+from PyQt5 import QtCore, QtGui, QtWidgets
 
 COLOR_ARRAY = [int, int, int]
 DIRECTORY = str

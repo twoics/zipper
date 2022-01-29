@@ -1,8 +1,9 @@
 """The module represents the progress bar widget"""
 
+# Third party imports
+from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QWidget
 from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtCore import Qt
 
 COLOR_ARRAY = [int, int, int]
 
