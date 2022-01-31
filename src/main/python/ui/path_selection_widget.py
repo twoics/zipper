@@ -26,7 +26,7 @@ INVALID_SYMBOLS = {"<", ">", ":", '"', "/", "\\", "|", "?", "*"}
 class PathSelectionWidget(QWidget):
     """Widget Class, If all fields are filled without problems, it sends a signal to start working"""
 
-    signal_to_start_convert = QtCore.pyqtSignal(PATH, NAME)
+    signal_with_path_and_name = QtCore.pyqtSignal(PATH, NAME)
 
     def __init__(self):
         super().__init__()
@@ -181,7 +181,7 @@ class PathSelectionWidget(QWidget):
         self._result_dir, self._result_name = self._get_data_from_all_fields()
         self.clear_input_filed()
         if self._check_ui_fields():
-            self.signal_to_start_convert.emit(Path(self._result_dir), self._result_name)
+            self.signal_with_path_and_name.emit(Path(self._result_dir), self._result_name)
         else:
             QMessageBox.warning(self, "Invalid path or name",
                                 "You must enter the correct name and specify the correct path")

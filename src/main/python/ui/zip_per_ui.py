@@ -17,14 +17,16 @@ from .path_selection_widget import PathSelectionWidget
 from . import zip_per_icons  # Don't remove it, it is an icon import
 from model.base import get_current_colors_from_json, change_current_theme_in_json, get_current_theme_style
 
+FILES_LIST = List[Path]
+
+DARK_THEME = "dark"
+
+ZIP = ".zip"
+
 # Operation mode
 CREATE_ZIP_WITH_COMPRESS = 1
 CREATE_ZIP_NOT_COMPRESS = 2
 UNZIP = 3
-
-FILES_LIST = List[Path]
-
-DARK_THEME = "dark"
 
 # Main Windows
 OPERATION_MODE_SELECTION_WINDOW = 0
@@ -36,9 +38,33 @@ PATH_SELECTION_WINDOW = 3
 FILE_LIST_WINDOW = 0
 INFORMATION_WINDOW = 1
 
+# Signal types
+PATH_LIST = list
+OPERATION_MODE = int
+DIRECTORY = Path
+NAME = str
+
+INFORMATION_ABOUT_THIS_APP = """What is it?
+This application helps you to zip and unzip files
+
+How it works:
+1) Choose one of three modes of operation: Archiving with 
+compression, archiving without compression, or unzipping
+2) Next, select the files you want to work with, 
+the drag and drop function is also supported
+3) Specify the name of the file / folder where the result of the 
+work will be saved, and also indicate the directory where 
+it will be stored
+4) After that, wait until the application completes its work, 
+after the file is created, the application itself will go 
+to the main window"""
+
 
 class UiZipPer(QMainWindow):
     """Main UI"""
+
+    # This signal is used to start file processing
+    signal_to_start_convert = QtCore.pyqtSignal(PATH_LIST, OPERATION_MODE, DIRECTORY, NAME)
 
     def __init__(self, controller_link):
         QMainWindow.__init__(self, parent=None)
@@ -98,7 +124,7 @@ class UiZipPer(QMainWindow):
         self._bottom = QtWidgets.QFrame(self._convertor)
         self._horizontalLayout_3 = QtWidgets.QHBoxLayout(self._bottom)
         self._add_file_button = QtWidgets.QPushButton(self._bottom)
-        self._generate_button = QtWidgets.QPushButton(self._bottom)
+        self._next_button = QtWidgets.QPushButton(self._bottom)
         self._del_file_button = QtWidgets.QPushButton(self._bottom)
 
         self._init_slots()
@@ -111,6 +137,7 @@ class UiZipPer(QMainWindow):
         self._clear_all_fields()
         self._windows_for_working_with_files.setCurrentIndex(INFORMATION_WINDOW)
         self._main_windows.setCurrentIndex(OPERATION_MODE_SELECTION_WINDOW)
+        self._bar_window.set_progress_value(0)
 
     def mousePressEvent(self, event: QtGui.QMouseEvent) -> None:
         self.click_position = event.globalPos()
@@ -123,15 +150,28 @@ class UiZipPer(QMainWindow):
 
     def _init_slots(self) -> None:
         """Connects signals and slots"""
-        self._drag_and_drop_information_window.on_dragging.connect(self._set_main_convertor)
+        self._logic_slots()
 
+        self._ui_slots()
+
+    def _logic_slots(self) -> None:
+        # Signal that starts file conversion
+        self.signal_to_start_convert.connect(self._controller.run)
+
+        # A signal that outputs data to save the result of the program
+        # Upon receipt, all the necessary data is collected and sent to the "signal_to_start_convert" signal
+        self._path_selection_widget.signal_with_path_and_name.connect(self._emit_signal_to_start_conversion)
+
+        # During the work of the controller, he sends a signal indicating the number of percent of the work done,
+        # we set this percentage in the progress bar
+        self._controller.percent_count.connect(self._set_progress_bar_value)
+
+    def _ui_slots(self) -> None:
+        # When user drags files, remove prompt window and show the file window
+        self._drag_and_drop_information_window.on_dragging.connect(self._set_window_with_files)
+
+        # When the user has added a file, through the button, remove the prompt window and show the file window
         self._main_list.added_file.connect(self._update_window)
-
-        self._back_button.clicked.connect(self._open_main_page_by_button_click)
-
-        self._changeTheme.clicked.connect(self._change_theme)
-
-        self._appBar.mouseMoveEvent = self._move_window
 
         # Top right buttons
         self._closeButton.clicked.connect(lambda: self.close())
@@ -146,17 +186,19 @@ class UiZipPer(QMainWindow):
         self._unpack_zip_button.clicked.connect(
             lambda: self._set_file_conversion_window_by_mode(UNZIP))
 
+        # Delete and add file buttons
         self._add_file_button.clicked.connect(
             lambda: self._main_list.add_file(QFileDialog.getOpenFileName()[0]))
         self._del_file_button.clicked.connect(
             lambda: self._main_list.delete_file())
 
-        # During the work of the controller, he sends a signal indicating the number of percent of the work done,
-        # we set this percentage in the progress bar
-        self._controller.percent_count.connect(self._set_progress_bar_value)
+        # By clicking this button: A window opens for selecting the path where the file and its name are saved.
+        self._next_button.clicked.connect(self._open_path_selection_widget)
 
-        self._generate_button.clicked.connect(self._open_path_selection_widget)
-        self._path_selection_widget.signal_to_start_convert.connect(self._start_conversion)
+        # Other slots
+        self._back_button.clicked.connect(self._open_main_page_by_button_click)
+        self._changeTheme.clicked.connect(self._change_theme)
+        self._appBar.mouseMoveEvent = self._move_window  # For moving app window
 
     def _set_json_colors_to_variables(self) -> None:
         """
@@ -278,14 +320,14 @@ class UiZipPer(QMainWindow):
         """
         if self._operating_mode == UNZIP:
             for file in files_list:
-                if file.suffix != ".zip":
+                if file.suffix != ZIP:
                     QMessageBox.warning(self, "Error",
                                         f"Only .ZIP files are available for unpacking, but a {str(file.suffix).upper()}"
                                         f" file of type was found")
                     return False
         return True
 
-    def _start_conversion(self, result_dir: Path, name: str) -> None:
+    def _emit_signal_to_start_conversion(self, result_dir: Path, name: str) -> None:
         """
         Starts processing files
         :param result_dir: Directory where to save the result
@@ -296,7 +338,8 @@ class UiZipPer(QMainWindow):
         files_list = self._main_list.get_files_path()
 
         # Start file processing
-        self._controller.run(files_list, self._operating_mode, result_dir, name)
+        self.signal_to_start_convert.emit(files_list, self._operating_mode, result_dir, name)
+        # self._controller.run(files_list, self._operating_mode, result_dir, name)
 
     def _open_path_selection_widget(self) -> None:
         files_list = self._main_list.get_files_path()
@@ -310,12 +353,12 @@ class UiZipPer(QMainWindow):
         self._operating_mode = mode
         self._main_windows.setCurrentIndex(FILE_OPERATION_WINDOW)
 
-    def _set_main_convertor(self) -> None:
+    def _set_window_with_files(self) -> None:
         self._windows_for_working_with_files.setCurrentIndex(FILE_LIST_WINDOW)
 
     def _update_window(self) -> None:
         if self._windows_for_working_with_files.currentIndex() == 1:
-            self._set_main_convertor()
+            self._set_window_with_files()
 
     def _set_progress_bar_value(self, value: int) -> None:
         self._bar_window.set_progress_value(value)
@@ -526,16 +569,16 @@ class UiZipPer(QMainWindow):
         self._add_file_button.setIconSize(QtCore.QSize(32, 32))
         self._add_file_button.setObjectName("addFile")
         self._horizontalLayout_3.addWidget(self._add_file_button, 0, Qt.Qt.AlignLeft)
-        self._generate_button.setMinimumSize(QtCore.QSize(400, 50))
-        self._generate_button.setMaximumSize(QtCore.QSize(400, 50))
-        self._generate_button.setStyleSheet("")
+        self._next_button.setMinimumSize(QtCore.QSize(400, 50))
+        self._next_button.setMaximumSize(QtCore.QSize(400, 50))
+        self._next_button.setStyleSheet("")
         icon11 = QtGui.QIcon()
         icon11.addPixmap(QtGui.QPixmap(":/newPrefix/ZipPerIcons/icons8-create-32.png"), Qt.QIcon.Normal,
                          Qt.QIcon.Off)
-        self._generate_button.setIcon(icon11)
-        self._generate_button.setIconSize(QtCore.QSize(32, 32))
-        self._generate_button.setObjectName("generate")
-        self._horizontalLayout_3.addWidget(self._generate_button, 0, Qt.Qt.AlignHCenter)
+        self._next_button.setIcon(icon11)
+        self._next_button.setIconSize(QtCore.QSize(32, 32))
+        self._next_button.setObjectName("generate")
+        self._horizontalLayout_3.addWidget(self._next_button, 0, Qt.Qt.AlignHCenter)
         self._del_file_button.setMinimumSize(QtCore.QSize(100, 50))
         self._del_file_button.setMaximumSize(QtCore.QSize(100, 50))
         self._del_file_button.setStyleSheet("")
@@ -566,5 +609,5 @@ class UiZipPer(QMainWindow):
         self._create_zip_not_compress_button.setText(_translate("MainWindow", "Not Compress"))
         self._unpack_zip_button.setText(_translate("MainWindow", "Unpack"))
         self._add_file_button.setText(_translate("MainWindow", "Add"))
-        self._generate_button.setText(_translate("MainWindow", "Generate"))
+        self._next_button.setText(_translate("MainWindow", "Next"))
         self._del_file_button.setText(_translate("MainWindow", "Delete"))
