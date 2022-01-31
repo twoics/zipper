@@ -13,4 +13,5 @@ target
 Lib
 Scripts
 Include
-
+/src/build/
+pyvenv.cfg

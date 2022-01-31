@@ -45,19 +45,19 @@ DIRECTORY = Path
 NAME = str
 
 INFORMATION_ABOUT_THIS_APP = """What is it?
-This application helps you to zip and unzip files
+This application helps you archive and unarchive files.
 
 How it works:
-1) Choose one of three modes of operation: Archiving with 
-compression, archiving without compression, or unzipping
+1) Choose one of three modes of operation: archiving with 
+Select one of the three operating modes: compression archiving, uncompressed archiving, or unarchiving.
 2) Next, select the files you want to work with, 
-the drag and drop function is also supported
-3) Specify the name of the file / folder where the result of the 
-work will be saved, and also indicate the directory where 
-it will be stored
-4) After that, wait until the application completes its work, 
-after the file is created, the application itself will go 
-to the main window"""
+The drag & drop feature is also supported.
+3) Specify the name of the file/folder where the result 
+will be saved, and specify the directory in which 
+it will be saved.
+4) After that, wait for the application to finish its work, 
+After the file is created, the application itself will 
+to the main window. """
 
 
 class UiZipPer(QMainWindow):
@@ -114,7 +114,7 @@ class UiZipPer(QMainWindow):
         self._unpack_zip_button = QtWidgets.QPushButton(self._buttons)
         self._bottomBar = QtWidgets.QFrame(self._optionButtons)
         self._horizontalLayout_7 = QtWidgets.QHBoxLayout(self._bottomBar)
-        self._infoResources = QtWidgets.QPushButton(self._bottomBar)
+        self._info_button = QtWidgets.QPushButton(self._bottomBar)
         self._changeTheme = QtWidgets.QPushButton(self._bottomBar)
         self._convertor = QtWidgets.QWidget()
         self._verticalLayout_2 = QtWidgets.QVBoxLayout(self._convertor)
@@ -199,6 +199,7 @@ class UiZipPer(QMainWindow):
         self._back_button.clicked.connect(self._open_main_page_by_button_click)
         self._changeTheme.clicked.connect(self._change_theme)
         self._appBar.mouseMoveEvent = self._move_window  # For moving app window
+        self._info_button.clicked.connect(self._show_info_about_app)
 
     def _set_json_colors_to_variables(self) -> None:
         """
@@ -290,6 +291,9 @@ class UiZipPer(QMainWindow):
             self._theme_icon.addPixmap(QtGui.QPixmap(":/newPrefix/ZipPerIcons/icons8-moon-32.png"), Qt.QIcon.Normal,
                                        Qt.QIcon.Off)
         self._changeTheme.setIcon(self._theme_icon)
+
+    def _show_info_about_app(self) -> None:
+        QMessageBox.warning(self, "What is it", INFORMATION_ABOUT_THIS_APP)
 
     def _clear_all_fields(self) -> None:
         self._main_list.delete_all()
@@ -529,16 +533,16 @@ class UiZipPer(QMainWindow):
         self._changeTheme.setIconSize(QtCore.QSize(32, 32))
         self._changeTheme.setObjectName("changeTheme")
         self._horizontalLayout_7.addWidget(self._changeTheme, 0, Qt.Qt.AlignLeft)
-        self._infoResources.setMinimumSize(QtCore.QSize(40, 40))
-        self._infoResources.setMaximumSize(QtCore.QSize(40, 40))
-        self._infoResources.setText("")
+        self._info_button.setMinimumSize(QtCore.QSize(40, 40))
+        self._info_button.setMaximumSize(QtCore.QSize(40, 40))
+        self._info_button.setText("")
         icon9 = QtGui.QIcon()
         icon9.addPixmap(QtGui.QPixmap(":/newPrefix/ZipPerIcons/icons8-info-32.png"), Qt.QIcon.Normal,
                         Qt.QIcon.Off)
-        self._infoResources.setIcon(icon9)
-        self._infoResources.setIconSize(QtCore.QSize(32, 32))
-        self._infoResources.setObjectName("infoResurses")
-        self._horizontalLayout_7.addWidget(self._infoResources, 0, Qt.Qt.AlignRight)
+        self._info_button.setIcon(icon9)
+        self._info_button.setIconSize(QtCore.QSize(32, 32))
+        self._info_button.setObjectName("infoResurses")
+        self._horizontalLayout_7.addWidget(self._info_button, 0, Qt.Qt.AlignRight)
         self._verticalLayout_3.addWidget(self._bottomBar)
         self._main_windows.addWidget(self._optionButtons)
         self._convertor.setStyleSheet("")
