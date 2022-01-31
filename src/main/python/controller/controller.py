@@ -49,6 +49,7 @@ class Controller(QtCore.QObject):
         self.finished.emit()
 
     def _init_slots(self) -> None:
+        # When convertor send signal, send a "percent_count" signal
         self._convertor.process_percent.connect(self._emit_count_percent)
 
     def _emit_count_percent(self, percent) -> QtCore.pyqtSignal():
