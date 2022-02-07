@@ -5,7 +5,8 @@ This application allows you to archive and unarchive files
 
 ## Download
 If you just want to use the application, you can simply download the `ZipPerSetup.exe`, and install the application on your computer.  
-Installer link [ZipPerSetup](https://github.com/twoics/ZipPer/blob/main/ZipPerSetup.exe)  
+You can download the release version here [ZipPerSetup](https://github.com/twoics/ZipPer/releases/tag/v1.0.0)  
+> Download only the .exe file, you do not need the rest to work
 
 ## Working with code
 If you want to work with the current code you need to do a few things
