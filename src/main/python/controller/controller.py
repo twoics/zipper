@@ -8,7 +8,7 @@ from pathlib import Path
 from PyQt5 import QtCore
 
 # Local application imports
-from .file_convertor import FileConvertor
+from .file_convertor import Archiver
 
 # Operation mode
 CREATE_ZIP_WITH_COMPRESS = 1
@@ -28,7 +28,7 @@ class Controller(QtCore.QObject):
 
     def __init__(self):
         super(Controller, self).__init__()
-        self._convertor = FileConvertor()
+        self._convertor = Archiver()
         self._init_slots()
 
     def run(self, file_list: PATH_LIST, operation_mode: int, directory: Path, name: str) -> QtCore.pyqtSignal():
