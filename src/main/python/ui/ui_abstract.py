@@ -14,11 +14,13 @@ class IView(ABC):
     """
     Interface for the UI
     """
+
     @abstractmethod
     def get_processing_signal(self) -> QtCore.pyqtSignal:
         """
         Returns the signal for listening,
         emitted when user start files processing
+        :return: Signal for listening
         """
         pass
 
@@ -27,5 +29,14 @@ class IView(ABC):
         """
         Takes the value of the progress
         :param value: Current progress value
+        :return: None
+        """
+        pass
+
+    @abstractmethod
+    def reset_ui(self) -> None:
+        """
+        Resets the ui and displays the first window
+        :return:None
         """
         pass

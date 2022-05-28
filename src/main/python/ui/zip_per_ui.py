@@ -73,14 +73,14 @@ class WindowViewMeta(type(QMainWindow), type(IView)):
 
 class UiZipPer(QMainWindow, IView, metaclass=WindowViewMeta):
     """Main UI"""
-
     # This signal is used to start file processing
-    signal_to_start_convert = QtCore.pyqtSignal(LIST_OF_FILES, OPERATION_MODE, DIRECTORY, NAME)
+    _signal_to_start_convert = QtCore.pyqtSignal(LIST_OF_FILES, OPERATION_MODE, DIRECTORY, NAME)
 
-    def __init__(self, controller_link):
+    def __init__(self):
         QMainWindow.__init__(self, parent=None)
+
         self._operating_mode = None
-        self._controller = controller_link
+        # self._controller = controller_link
 
         # Position for moving main window
         self.click_position = None
@@ -156,9 +156,20 @@ class UiZipPer(QMainWindow, IView, metaclass=WindowViewMeta):
             NAME - name of file/folder, under which to save the result
         :return: Signal for listening
         """
-        return self.signal_to_start_convert
+        return self._signal_to_start_convert
 
-    @QtCore.pyqtSlot()
+    def reset_ui(self) -> None:
+        """
+        Resets the ui, clear all fields
+        and displays the first window
+        :return: None
+        """
+        self._clear_all_fields()
+        self._windows_for_working_with_files.setCurrentIndex(INFORMATION_WINDOW)
+        self._open_window(OPERATION_MODE_SELECTION_WINDOW)
+        self._bar_window.set_progress_value(0)
+
+    @QtCore.pyqtSlot(int)
     def set_progress_value(self, value: int) -> None:
         """
         Set value to progress bar
@@ -167,6 +178,7 @@ class UiZipPer(QMainWindow, IView, metaclass=WindowViewMeta):
         """
         if value < 0 or value > 100:
             raise ValueError("Value must bu 0 < and <= 100")
+        print(value)
         self._bar_window.set_progress_value(value)
 
     @QtCore.pyqtSlot()
@@ -210,7 +222,7 @@ class UiZipPer(QMainWindow, IView, metaclass=WindowViewMeta):
         change_current_theme_in_json()
         self._set_stylesheet_by_json_colors()
 
-    @QtCore.pyqtSlot()
+    @QtCore.pyqtSlot(Path, str)
     def _emit_signal_to_start_conversion(self, result_dir: Path, name: str) -> None:
         """
         Starts processing files
@@ -222,7 +234,7 @@ class UiZipPer(QMainWindow, IView, metaclass=WindowViewMeta):
         files_list = self._main_list.get_files_path()
 
         # Start file processing
-        self.signal_to_start_convert.emit(files_list, self._operating_mode, result_dir, name)
+        self._signal_to_start_convert.emit(files_list, self._operating_mode, result_dir, name)
         # TODO self._controller.run(files_list, self._operating_mode, result_dir, name)
 
     @QtCore.pyqtSlot()
@@ -248,7 +260,7 @@ class UiZipPer(QMainWindow, IView, metaclass=WindowViewMeta):
 
         self._open_window(PATH_SELECTION_WINDOW)
 
-    @QtCore.pyqtSlot()
+    @QtCore.pyqtSlot(int)
     def _set_processing_mode(self, mode: int) -> None:
         """
         Sets the file processing mode:
@@ -271,7 +283,7 @@ class UiZipPer(QMainWindow, IView, metaclass=WindowViewMeta):
         """
         self._windows_for_working_with_files.setCurrentIndex(FILE_LIST_WINDOW)
 
-    @QtCore.pyqtSlot()
+    @QtCore.pyqtSlot(QtGui.QMouseEvent)
     def _move_window(self, event: QtGui.QMouseEvent) -> None:
         """
         Dragging the application window
@@ -318,17 +330,6 @@ class UiZipPer(QMainWindow, IView, metaclass=WindowViewMeta):
             raise ValueError(f"{window_index} index not in available window indexes")
         self._main_windows.setCurrentIndex(window_index)
 
-    def back_to_start(self) -> None:
-        """
-        The method returns all fields and
-        windows to the start view, also clears all fields
-        :return: None
-        """
-        self._clear_all_fields()
-        self._windows_for_working_with_files.setCurrentIndex(INFORMATION_WINDOW)
-        self._open_window(OPERATION_MODE_SELECTION_WINDOW)
-        self._bar_window.set_progress_value(0)
-
     def _clear_all_fields(self) -> None:
         """
         Clears all fields in the application
@@ -353,9 +354,6 @@ class UiZipPer(QMainWindow, IView, metaclass=WindowViewMeta):
         self._ui_slots()
 
     def _logic_slots(self) -> None:
-        # Signal that starts file conversion
-        self.signal_to_start_convert.connect(self._controller.run)
-
         # A signal that outputs data to save the result of the program
         # Upon receipt, all the necessary data is collected and sent to the "signal_to_start_convert" signal
         self._path_selection_widget.signal_with_path_and_name.connect(self._emit_signal_to_start_conversion)

@@ -11,13 +11,18 @@ from PyQt5 import QtCore
 
 # Local application imports
 from .file_handler import FileHandler
+from .abstract_archiver import IArchiver
 
 FOLDER_SUFFIX = ''
 PATH_LIST = List[Path]
 ZIP = ".zip"
 
 
-class Archiver(QtCore.QObject):
+class ArchiverObjectMeta(type(QtCore.QObject), type(IArchiver)):
+    pass
+
+
+class Archiver(QtCore.QObject, IArchiver, metaclass=ArchiverObjectMeta):
     """Class for converting files"""
 
     process_percent = QtCore.pyqtSignal(int)  # Signal with the number of sorted files as a percentage
@@ -25,6 +30,17 @@ class Archiver(QtCore.QObject):
     def __init__(self):
         super(Archiver, self).__init__()
         self._file_handler = FileHandler()
+        self._old = None
+
+    def get_process_signal(self) -> QtCore.pyqtSignal:
+        """
+        Returns the signal for listening.
+        The signal is emitted during
+        the operation of the archiver,
+        and emits the percentage of work performed
+        :return: Signal for listening
+        """
+        return self.process_percent
 
     def zip_convert(self, path_files_to_convert: PATH_LIST, result_dir: Path, archive_name: str,
                     compression: bool = True) -> None:
@@ -99,11 +115,7 @@ class Archiver(QtCore.QObject):
         :param total: Total files or size
         :return: Emit signal
         """
-        percent = 100 * processed / total
-        # TODO FIX THIS
-
-        # Since calculations often produce floating point numbers and rounding produces
-        # an integer that has already been sent by the signal, I do this check to avoid unnecessary signals
-
-        # if round(percent) == int(percent) and percent % 1 > 5:
-        #     self.process_percent.emit(percent)
+        percent = int(100 * processed / total)
+        if percent != self._old:
+            self._old = percent
+            self.process_percent.emit(percent)
