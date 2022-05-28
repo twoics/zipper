@@ -38,7 +38,7 @@ class Main:
         self._timer.start(WAITING_TIME)
 
     def _open_main_page(self):
-        self._window_UI.open_main_window_after_shutdown()
+        self._window_UI.back_to_start()
         self._timer.stop()
 
 
