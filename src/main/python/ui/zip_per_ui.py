@@ -14,6 +14,7 @@ from .files_list import QList
 from .information_window import HintPage
 from .progress_bar_ui import ProgressBarWindow
 from .path_selection_widget import PathSelectionWidget
+from .ui_abstract import IView
 from . import zip_per_icons  # Don't remove it, it is an icon import
 from model.base import get_current_colors_from_json, change_current_theme_in_json, get_current_theme_style
 
@@ -27,19 +28,25 @@ ZIP = ".zip"
 CREATE_ZIP_WITH_COMPRESS = 1
 CREATE_ZIP_NOT_COMPRESS = 2
 UNZIP = 3
+AVAILABLE_MODES = {CREATE_ZIP_WITH_COMPRESS, CREATE_ZIP_NOT_COMPRESS, UNZIP}
 
 # Main Windows
 OPERATION_MODE_SELECTION_WINDOW = 0
 FILE_OPERATION_WINDOW = 1
 PROGRESS_OF_PROCESSED_FILES_WINDOW = 2
 PATH_SELECTION_WINDOW = 3
+AVAILABLE_WINDOWS = {OPERATION_MODE_SELECTION_WINDOW, FILE_OPERATION_WINDOW,
+                     PROGRESS_OF_PROCESSED_FILES_WINDOW, PATH_SELECTION_WINDOW}
 
 # Windows for working with files
 FILE_LIST_WINDOW = 0
 INFORMATION_WINDOW = 1
 
+# Drag and drop tooltip window
+PROMPT_WINDOW = 1
+
 # Signal types
-PATH_LIST = list
+LIST_OF_FILES = list
 OPERATION_MODE = int
 DIRECTORY = Path
 NAME = str
@@ -60,16 +67,21 @@ After the file is created, the application itself will
 to the main window. """
 
 
-class UiZipPer(QMainWindow):
+class WindowViewMeta(type(QMainWindow), type(IView)):
+    pass
+
+
+class UiZipPer(QMainWindow, IView, metaclass=WindowViewMeta):
     """Main UI"""
 
     # This signal is used to start file processing
-    signal_to_start_convert = QtCore.pyqtSignal(PATH_LIST, OPERATION_MODE, DIRECTORY, NAME)
+    signal_to_start_convert = QtCore.pyqtSignal(LIST_OF_FILES, OPERATION_MODE, DIRECTORY, NAME)
 
     def __init__(self, controller_link):
         QMainWindow.__init__(self, parent=None)
         self._operating_mode = None
         self._controller = controller_link
+
         # Position for moving main window
         self.click_position = None
 
@@ -133,20 +145,206 @@ class UiZipPer(QMainWindow):
 
         self._setup_ui()
 
-    def open_main_window_after_shutdown(self) -> None:
-        self._clear_all_fields()
-        self._windows_for_working_with_files.setCurrentIndex(INFORMATION_WINDOW)
-        self._main_windows.setCurrentIndex(OPERATION_MODE_SELECTION_WINDOW)
-        self._bar_window.set_progress_value(0)
+    def get_processing_signal(self) -> QtCore.pyqtSignal:
+        """
+        The method returns a signal for listening to it.
+        The signal will be emitted when the user clicks on the file processing button
+        The emitted signal contains:
+            LIST_OF_FILES - The list of files to be processed
+            OPERATION_MODE - mode of processing (archiving, uncompressed archiving, unarchiving)
+            DIRECTORY - directory where to save the result
+            NAME - name of file/folder, under which to save the result
+        :return: Signal for listening
+        """
+        return self.signal_to_start_convert
 
-    def mousePressEvent(self, event: QtGui.QMouseEvent) -> None:
-        self.click_position = event.globalPos()
+    @QtCore.pyqtSlot()
+    def set_progress_value(self, value: int) -> None:
+        """
+        Set value to progress bar
+        :param value: Value for setting
+        :return: None
+        """
+        if value < 0 or value > 100:
+            raise ValueError("Value must bu 0 < and <= 100")
+        self._bar_window.set_progress_value(value)
 
-    def _open_main_page_by_button_click(self) -> None:
+    @QtCore.pyqtSlot()
+    def _open_start_page(self) -> None:
+        """
+        Clears all fields, and opens the start page
+        :return: None
+        """
         if self._main_windows.currentIndex() != PROGRESS_OF_PROCESSED_FILES_WINDOW:
             self._clear_all_fields()
             self._windows_for_working_with_files.setCurrentIndex(INFORMATION_WINDOW)
-            self._main_windows.setCurrentIndex(OPERATION_MODE_SELECTION_WINDOW)
+            self._open_window(OPERATION_MODE_SELECTION_WINDOW)
+
+    @QtCore.pyqtSlot()
+    def _show_app_info(self) -> None:
+        """
+        Opens a pop-up window with
+        a description of the application
+        :return: None
+        """
+        QMessageBox.warning(self, "What is it", INFORMATION_ABOUT_THIS_APP)
+
+    @QtCore.pyqtSlot()
+    def _maximize_or_restore(self) -> None:
+        """
+        Event handler for pressing the
+        "minimize" button
+        Makes the window small
+        or large relative to the current size
+        :return: None
+        """
+        if self.isMaximized():
+            self.showNormal()
+        else:
+            self.showMaximized()
+
+    @QtCore.pyqtSlot()
+    def _change_theme(self) -> None:
+        """Change app-theme dark -> light or light -> dark"""
+        # TODO Change this
+        change_current_theme_in_json()
+        self._set_stylesheet_by_json_colors()
+
+    @QtCore.pyqtSlot()
+    def _emit_signal_to_start_conversion(self, result_dir: Path, name: str) -> None:
+        """
+        Starts processing files
+        :param result_dir: Directory where to save the result
+        :param name: Name of result file or folder
+        :return: None
+        """
+        self._open_window(PROGRESS_OF_PROCESSED_FILES_WINDOW)
+        files_list = self._main_list.get_files_path()
+
+        # Start file processing
+        self.signal_to_start_convert.emit(files_list, self._operating_mode, result_dir, name)
+        # TODO self._controller.run(files_list, self._operating_mode, result_dir, name)
+
+    @QtCore.pyqtSlot()
+    def _open_saving_window(self) -> None:
+        """
+        Opens a window for choosing a path to save,
+        before opening checks if there are any files ( number of files != 0 )
+        and ZIP files format if need to unpack files
+        :return: None
+        """
+        files_list = self._main_list.get_files_path()
+
+        # Check by 0 files
+        if not files_list:
+            QMessageBox.warning(self, "Error", "No files found to convert")
+            return
+
+        # Check by ZIP format for UNZIP mode
+        if not self._check_before_unpacking(files_list):
+            QMessageBox.warning(self, "Error",
+                                f"Only .ZIP files are available for unpacking")
+            return
+
+        self._open_window(PATH_SELECTION_WINDOW)
+
+    @QtCore.pyqtSlot()
+    def _set_processing_mode(self, mode: int) -> None:
+        """
+        Sets the file processing mode:
+        archiving, unarchiving, archiving without compression
+        :param mode: Method of working with files
+        :return: None
+        """
+        if mode not in AVAILABLE_MODES:
+            raise ValueError(f"{mode} not in available modes")
+
+        self._operating_mode = mode
+        self._open_window(FILE_OPERATION_WINDOW)
+
+    @QtCore.pyqtSlot()
+    def _open_files_window(self) -> None:
+        """
+        Opens a window in which the user selects
+        the files he wants to work with
+        :return: None
+        """
+        self._windows_for_working_with_files.setCurrentIndex(FILE_LIST_WINDOW)
+
+    @QtCore.pyqtSlot()
+    def _move_window(self, event: QtGui.QMouseEvent) -> None:
+        """
+        Dragging the application window
+        :param event: Dragging window event
+        :return: None
+        """
+        self.move(self.pos() + event.globalPos() - self.click_position)
+        self.click_position = event.globalPos()
+        event.accept()
+
+    @QtCore.pyqtSlot()
+    def _add_file_dialog(self) -> None:
+        """
+        Adds a file, through a dialog window,
+        by clicking the "add" button
+        :return: None
+        """
+        file_path = QFileDialog.getOpenFileName()[0]
+        self._main_list.add_file(file_path)
+
+        # If a prompt window is open, change it to the file window
+        if self._windows_for_working_with_files.currentIndex() == PROMPT_WINDOW:
+            self._open_files_window()
+
+    def _check_before_unpacking(self, files_list: FILES_LIST) -> bool:
+        """
+        If the archive unpacking mode is selected, it checks that all elements are in .ZIP format
+        :param files_list: List with files
+        :return: Is all files .ZIP format if unpacking mode is selected
+        """
+        if self._operating_mode == UNZIP:
+            for file in files_list:
+                if file.suffix != ZIP:
+                    return False
+        return True
+
+    def _open_window(self, window_index: int) -> None:
+        """
+        Opens a window by its index
+        :param window_index: Index of the window to be opened
+        :return: None
+        """
+        if window_index not in AVAILABLE_WINDOWS:
+            raise ValueError(f"{window_index} index not in available window indexes")
+        self._main_windows.setCurrentIndex(window_index)
+
+    def back_to_start(self) -> None:
+        """
+        The method returns all fields and
+        windows to the start view, also clears all fields
+        :return: None
+        """
+        self._clear_all_fields()
+        self._windows_for_working_with_files.setCurrentIndex(INFORMATION_WINDOW)
+        self._open_window(OPERATION_MODE_SELECTION_WINDOW)
+        self._bar_window.set_progress_value(0)
+
+    def _clear_all_fields(self) -> None:
+        """
+        Clears all fields in the application
+        :return: None
+        """
+        self._main_list.delete_all()
+        self._path_selection_widget.clear_input_filed()
+
+    def mousePressEvent(self, event: QtGui.QMouseEvent) -> None:
+        """
+        Mouse click event, recording
+        the coordinates of the click
+        :param event: Click event
+        :return: None
+        """
+        self.click_position = event.globalPos()
 
     def _init_slots(self) -> None:
         """Connects signals and slots"""
@@ -164,14 +362,11 @@ class UiZipPer(QMainWindow):
 
         # During the work of the controller, he sends a signal indicating the number of percent of the work done,
         # we set this percentage in the progress bar
-        self._controller.percent_count.connect(self._set_progress_bar_value)
+        # TODO self._controller.percent_count.connect(self._set_progress_bar_value)
 
     def _ui_slots(self) -> None:
         # When user drags files, remove prompt window and show the file window
-        self._drag_and_drop_information_window.on_dragging.connect(self._set_window_with_files)
-
-        # When the user has added a file, through the button, remove the prompt window and show the file window
-        self._main_list.added_file.connect(self._update_window)
+        self._drag_and_drop_information_window.on_dragging.connect(self._open_files_window)
 
         # Top right buttons
         self._closeButton.clicked.connect(lambda: self.close())
@@ -180,26 +375,26 @@ class UiZipPer(QMainWindow):
 
         # Opens the page and notify about change status
         self._create_zip_with_compress_button.clicked.connect(
-            lambda: self._set_file_conversion_window_by_mode(CREATE_ZIP_WITH_COMPRESS))
+            lambda: self._set_processing_mode(CREATE_ZIP_WITH_COMPRESS))
         self._create_zip_not_compress_button.clicked.connect(
-            lambda: self._set_file_conversion_window_by_mode(CREATE_ZIP_NOT_COMPRESS))
+            lambda: self._set_processing_mode(CREATE_ZIP_NOT_COMPRESS))
         self._unpack_zip_button.clicked.connect(
-            lambda: self._set_file_conversion_window_by_mode(UNZIP))
+            lambda: self._set_processing_mode(UNZIP))
 
         # Delete and add file buttons
         self._add_file_button.clicked.connect(
-            lambda: self._main_list.add_file(QFileDialog.getOpenFileName()[0]))
+            self._add_file_dialog)
         self._del_file_button.clicked.connect(
             lambda: self._main_list.delete_file())
 
         # By clicking this button: A window opens for selecting the path where the file and its name are saved.
-        self._next_button.clicked.connect(self._open_path_selection_widget)
+        self._next_button.clicked.connect(self._open_saving_window)
 
         # Other slots
-        self._back_button.clicked.connect(self._open_main_page_by_button_click)
+        self._back_button.clicked.connect(self._open_start_page)
         self._changeTheme.clicked.connect(self._change_theme)
         self._appBar.mouseMoveEvent = self._move_window  # For moving app window
-        self._info_button.clicked.connect(self._show_info_about_app)
+        self._info_button.clicked.connect(self._show_app_info)
 
     def _set_json_colors_to_variables(self) -> None:
         """
@@ -292,85 +487,9 @@ class UiZipPer(QMainWindow):
                                        Qt.QIcon.Off)
         self._changeTheme.setIcon(self._theme_icon)
 
-    def _show_info_about_app(self) -> None:
-        QMessageBox.warning(self, "What is it", INFORMATION_ABOUT_THIS_APP)
-
-    def _clear_all_fields(self) -> None:
-        self._main_list.delete_all()
-        self._path_selection_widget.clear_input_filed()
-
-    def _maximize_or_restore(self) -> None:
-        if self.isMaximized():
-            self.showNormal()
-        else:
-            self.showMaximized()
-
-    def _change_theme(self) -> None:
-        """Change app-theme dark -> light or light -> dark"""
-        change_current_theme_in_json()
-        self._set_stylesheet_by_json_colors()
-
-    def _check_files_list_by_empty(self, files_list: FILES_LIST) -> bool:
-        if len(files_list) == 0:
-            QMessageBox.warning(self, "Error", "No files found to convert")
-            return False
-        return True
-
-    def _check_files_list_by_unpacking(self, files_list: FILES_LIST) -> bool:
-        """
-        If the archive unpacking mode is selected, it checks that all elements are in .ZIP format
-        :param files_list: List with files
-        :return: Is all files .ZIP format if unpacking mode is selected
-        """
-        if self._operating_mode == UNZIP:
-            for file in files_list:
-                if file.suffix != ZIP:
-                    QMessageBox.warning(self, "Error",
-                                        f"Only .ZIP files are available for unpacking, but a {str(file.suffix).upper()}"
-                                        f" file of type was found")
-                    return False
-        return True
-
-    def _emit_signal_to_start_conversion(self, result_dir: Path, name: str) -> None:
-        """
-        Starts processing files
-        :param result_dir: Directory where to save the result
-        :param name: Name of result file or folder
-        :return: None
-        """
-        self._main_windows.setCurrentIndex(PROGRESS_OF_PROCESSED_FILES_WINDOW)
-        files_list = self._main_list.get_files_path()
-
-        # Start file processing
-        self.signal_to_start_convert.emit(files_list, self._operating_mode, result_dir, name)
-        # self._controller.run(files_list, self._operating_mode, result_dir, name)
-
-    def _open_path_selection_widget(self) -> None:
-        files_list = self._main_list.get_files_path()
-
-        if not self._check_files_list_by_unpacking(files_list) or not self._check_files_list_by_empty(files_list):
-            return
-
-        self._main_windows.setCurrentIndex(PATH_SELECTION_WINDOW)
-
-    def _set_file_conversion_window_by_mode(self, mode) -> None:
-        self._operating_mode = mode
-        self._main_windows.setCurrentIndex(FILE_OPERATION_WINDOW)
-
-    def _set_window_with_files(self) -> None:
-        self._windows_for_working_with_files.setCurrentIndex(FILE_LIST_WINDOW)
-
-    def _update_window(self) -> None:
-        if self._windows_for_working_with_files.currentIndex() == 1:
-            self._set_window_with_files()
-
-    def _set_progress_bar_value(self, value: int) -> None:
-        self._bar_window.set_progress_value(value)
-
-    def _move_window(self, event: QtGui.QMouseEvent) -> None:
-        self.move(self.pos() + event.globalPos() - self.click_position)
-        self.click_position = event.globalPos()
-        event.accept()
+    # TODO
+    # def _set_progress_bar_value(self, value: int) -> None:
+    #     self._bar_window.set_progress_value(value)
 
     def _setup_ui(self) -> None:
         self.setObjectName("MainWindow")
@@ -602,7 +721,7 @@ class UiZipPer(QMainWindow):
         self.setCentralWidget(self._central_widget)
 
         self._translate_ui()
-        self._main_windows.setCurrentIndex(OPERATION_MODE_SELECTION_WINDOW)
+        self._open_window(OPERATION_MODE_SELECTION_WINDOW)
         QtCore.QMetaObject.connectSlotsByName(self)
 
     def _translate_ui(self) -> None:
