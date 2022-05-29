@@ -12,7 +12,7 @@ class IArchiver(ABC):
     that implements the archiver logic
     """
     @abstractmethod
-    def get_process_signal(self) -> QtCore.pyqtSignal:
+    def get_process_signal(self) -> QtCore.pyqtSignal():
         """
         Returns the signal for listening,
         which emits a percentage of the processed files

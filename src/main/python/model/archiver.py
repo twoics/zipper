@@ -32,7 +32,7 @@ class Archiver(QtCore.QObject, IArchiver, metaclass=ArchiverObjectMeta):
         self._file_handler = FileHandler()
         self._old = None
 
-    def get_process_signal(self) -> QtCore.pyqtSignal:
+    def get_process_signal(self) -> QtCore.pyqtSignal():
         """
         Returns the signal for listening.
         The signal is emitted during

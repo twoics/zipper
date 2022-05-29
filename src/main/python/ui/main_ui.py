@@ -10,13 +10,13 @@ from PyQt5 import Qt, QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QFileDialog, QMessageBox
 
 # Local application imports
-from .files_list import QList
-from .information_window import HintPage
-from .progress_bar_ui import ProgressBarWindow
-from .path_selection_widget import PathSelectionWidget
+from src.main.python.ui.auxiliary_ui.files_list import QList
+from src.main.python.ui.auxiliary_ui.information_window import HintPage
+from src.main.python.ui.auxiliary_ui.progress_bar_ui import ProgressBarWindow
+from src.main.python.ui.auxiliary_ui.path_selection_widget import PathSelectionWidget
 from .ui_abstract import IView
-from . import zip_per_icons  # Don't remove it, it is an icon import
-from model.base import get_current_colors_from_json, change_current_theme_in_json, get_current_theme_style
+# Icons import
+import src.main.python.ui.auxiliary_ui.zip_per_icons
 
 FILES_LIST = List[Path]
 
@@ -74,7 +74,10 @@ class WindowViewMeta(type(QMainWindow), type(IView)):
 class UiZipPer(QMainWindow, IView, metaclass=WindowViewMeta):
     """Main UI"""
     # This signal is used to start file processing
-    _signal_to_start_convert = QtCore.pyqtSignal(LIST_OF_FILES, OPERATION_MODE, DIRECTORY, NAME)
+    _start_processing_signal = QtCore.pyqtSignal(LIST_OF_FILES, OPERATION_MODE, DIRECTORY, NAME)
+
+    # Signal to change theme
+    _set_another_theme_signal = QtCore.pyqtSignal()
 
     def __init__(self):
         QMainWindow.__init__(self, parent=None)
@@ -84,16 +87,6 @@ class UiZipPer(QMainWindow, IView, metaclass=WindowViewMeta):
 
         # Position for moving main window
         self.click_position = None
-
-        # Colors
-        self._main_background_color = None
-        self._button_color = None
-        self._button_hover = None
-        self._app_name_color = None
-        self._top_right_hover = None
-        self._top_right_background = None
-        self._close_button_hover = None
-        self._main_body_background = None
 
         self._theme_icon = QtGui.QIcon()
         self._central_widget = QtWidgets.QWidget(self)
@@ -140,12 +133,9 @@ class UiZipPer(QMainWindow, IView, metaclass=WindowViewMeta):
         self._del_file_button = QtWidgets.QPushButton(self._bottom)
 
         self._init_slots()
-
-        self._set_stylesheet_by_json_colors()
-
         self._setup_ui()
 
-    def get_processing_signal(self) -> QtCore.pyqtSignal:
+    def get_processing_signal(self) -> QtCore.pyqtSignal(list, int, Path, str):
         """
         The method returns a signal for listening to it.
         The signal will be emitted when the user clicks on the file processing button
@@ -156,7 +146,15 @@ class UiZipPer(QMainWindow, IView, metaclass=WindowViewMeta):
             NAME - name of file/folder, under which to save the result
         :return: Signal for listening
         """
-        return self._signal_to_start_convert
+        return self._start_processing_signal
+
+    def get_change_theme_signal(self) -> QtCore.pyqtSignal():
+        """
+        Returns the signal to be listened to,
+        which is emitted when the user wants to change the theme
+        :return: Signal for listening
+        """
+        return self._set_another_theme_signal
 
     def reset_ui(self) -> None:
         """
@@ -169,6 +167,29 @@ class UiZipPer(QMainWindow, IView, metaclass=WindowViewMeta):
         self._open_window(OPERATION_MODE_SELECTION_WINDOW)
         self._bar_window.set_progress_value(0)
 
+    def set_theme(self, color_dict: dict) -> None:
+        """
+        The method sets the colors of the application
+        according to the passed color dictionary
+        :param color_dict: Dictionary of colors
+        Keys:
+            "main_background_color"
+            "button_color"
+            "button_hover"
+            "app_name"
+            "top_rights_buttons_hover"
+            "top_rights_buttons"
+            "close_button_hover"
+            "main_body_background"
+            "style"
+        Values:
+            [red, green, blue]
+            for style: on of {dark, light}
+        :return: None
+        """
+        self._set_style(color_dict)
+        self._setup_ui()
+
     @QtCore.pyqtSlot(int)
     def set_progress_value(self, value: int) -> None:
         """
@@ -178,7 +199,6 @@ class UiZipPer(QMainWindow, IView, metaclass=WindowViewMeta):
         """
         if value < 0 or value > 100:
             raise ValueError("Value must bu 0 < and <= 100")
-        print(value)
         self._bar_window.set_progress_value(value)
 
     @QtCore.pyqtSlot()
@@ -217,10 +237,11 @@ class UiZipPer(QMainWindow, IView, metaclass=WindowViewMeta):
 
     @QtCore.pyqtSlot()
     def _change_theme(self) -> None:
-        """Change app-theme dark -> light or light -> dark"""
-        # TODO Change this
-        change_current_theme_in_json()
-        self._set_stylesheet_by_json_colors()
+        """
+        Change app-theme dark -> light or light -> dark
+        :return: None
+        """
+        self._set_another_theme_signal.emit()
 
     @QtCore.pyqtSlot(Path, str)
     def _emit_signal_to_start_conversion(self, result_dir: Path, name: str) -> None:
@@ -234,8 +255,7 @@ class UiZipPer(QMainWindow, IView, metaclass=WindowViewMeta):
         files_list = self._main_list.get_files_path()
 
         # Start file processing
-        self._signal_to_start_convert.emit(files_list, self._operating_mode, result_dir, name)
-        # TODO self._controller.run(files_list, self._operating_mode, result_dir, name)
+        self._start_processing_signal.emit(files_list, self._operating_mode, result_dir, name)
 
     @QtCore.pyqtSlot()
     def _open_saving_window(self) -> None:
@@ -354,13 +374,8 @@ class UiZipPer(QMainWindow, IView, metaclass=WindowViewMeta):
         self._ui_slots()
 
     def _logic_slots(self) -> None:
-        # A signal that outputs data to save the result of the program
-        # Upon receipt, all the necessary data is collected and sent to the "signal_to_start_convert" signal
+        #  When received, all necessary data is collected and sent to the signal start processing
         self._path_selection_widget.signal_with_path_and_name.connect(self._emit_signal_to_start_conversion)
-
-        # During the work of the controller, he sends a signal indicating the number of percent of the work done,
-        # we set this percentage in the progress bar
-        # TODO self._controller.percent_count.connect(self._set_progress_bar_value)
 
     def _ui_slots(self) -> None:
         # When user drags files, remove prompt window and show the file window
@@ -394,100 +409,83 @@ class UiZipPer(QMainWindow, IView, metaclass=WindowViewMeta):
         self._appBar.mouseMoveEvent = self._move_window  # For moving app window
         self._info_button.clicked.connect(self._show_app_info)
 
-    def _set_json_colors_to_variables(self) -> None:
-        """
-        Get colors from JSON and set colors to variable
-        :return: None
-        """
-        colors_dict = get_current_colors_from_json()
-        self._main_background_color = colors_dict["main_background_color"]
-        self._button_color = colors_dict["button_color"]
-        self._button_hover = colors_dict["button_hover"]
-        self._app_name_color = colors_dict["app_name"]
-        self._top_right_hover = colors_dict["top_rights_buttons_hover"]
-        self._top_right_background = colors_dict["top_rights_buttons"]
-        self._close_button_hover = colors_dict["close_button_hover"]
-        self._main_body_background = colors_dict["main_body_background"]
-
-    def _set_stylesheet_by_json_colors(self) -> None:
+    def _set_style(self, colors_dict: dict) -> None:
         """
         Set colors to widget by colors from JSON
         :return: None
         """
-        self._set_json_colors_to_variables()
+        main_background_color = colors_dict["main_background_color"]
+        _button_color = colors_dict["button_color"]
+        _button_hover = colors_dict["button_hover"]
+        _app_name_color = colors_dict["app_name"]
+        _top_right_hover = colors_dict["top_rights_buttons_hover"]
+        _top_right_background = colors_dict["top_rights_buttons"]
+        _close_button_hover = colors_dict["close_button_hover"]
+        _main_body_background = colors_dict["main_body_background"]
+        _icon_path = colors_dict["icon_path"]
 
-        self._central_widget.setStyleSheet(f"background-color: rgb({self._main_background_color[0]}, "
-                                           f"{self._main_background_color[1]}, {self._main_background_color[2]});")
+        self._central_widget.setStyleSheet(f"background-color: rgb({main_background_color[0]}, "
+                                           f"{main_background_color[1]}, {main_background_color[2]});")
 
         self._appBar.setStyleSheet("QPushButton{"
-                                   f"background-color: rgb({self._button_color[0]}, {self._button_color[1]}, {self._button_color[2]});"
+                                   f"background-color: rgb({_button_color[0]}, {_button_color[1]}, {_button_color[2]});"
                                    "    border-radius: 15;"
                                    "}"
                                    "QPushButton::hover"
                                    "{"
-                                   f"    background-color: rgb({self._button_hover[0]}, {self._button_hover[1]}, "
-                                   f"{self._button_hover[2]});"
+                                   f"    background-color: rgb({_button_hover[0]}, {_button_hover[1]}, "
+                                   f"{_button_hover[2]});"
                                    "}")
 
         self._topRightButtons.setStyleSheet("QPushButton{"
                                             "        border-radius: 5;"
-                                            f"        background-color: rgb({self._top_right_background[0]}, "
-                                            f"{self._top_right_background[1]}, {self._top_right_background[2]});"
+                                            f"        background-color: rgb({_top_right_background[0]}, "
+                                            f"{_top_right_background[1]}, {_top_right_background[2]});"
                                             "}"
                                             "QPushButton::hover"
                                             "{"
-                                            f"        background-color : rgb({self._top_right_hover[0]}, "
-                                            f"{self._top_right_hover[1]},"
-                                            f" {self._top_right_hover[2]});"
+                                            f"        background-color : rgb({_top_right_hover[0]}, "
+                                            f"{_top_right_hover[1]},"
+                                            f" {_top_right_hover[2]});"
                                             "}")
 
         self._closeButton.setStyleSheet("QPushButton{"
                                         "        border-radius: 5;"
-                                        f"        background-color: rgb({self._top_right_background[0]}, "
-                                        f"{self._top_right_background[1]}, {self._top_right_background[2]});"
+                                        f"        background-color: rgb({_top_right_background[0]}, "
+                                        f"{_top_right_background[1]}, {_top_right_background[2]});"
                                         "}"
                                         "QPushButton::hover"
                                         "{"
-                                        f"    background-color: rgb({self._close_button_hover[0]}, {self._close_button_hover[1]},"
-                                        f" {self._close_button_hover[2]});"
+                                        f"    background-color: rgb({_close_button_hover[0]}, {_close_button_hover[1]},"
+                                        f" {_close_button_hover[2]});"
                                         "}")
 
-        self._mainBody.setStyleSheet(f"background-color: rgb({self._main_body_background[0]}, "
-                                     f"{self._main_body_background[1]}, {self._main_body_background[2]});")
-
         self._main_windows.setStyleSheet("QPushButton{"
-                                         f"    background-color: rgb({self._button_color[0]}, "
-                                         f"{self._button_color[1]}, {self._button_color[2]});"
+                                         f"    background-color: rgb({_button_color[0]}, "
+                                         f"{_button_color[1]}, {_button_color[2]});"
                                          "    border-radius: 15;"
                                          "}"
                                          "QPushButton::hover"
                                          "{"
-                                         f"    background-color: rgb({self._button_hover[0]}, {self._button_hover[1]},"
-                                         f" {self._button_hover[2]});"
+                                         f"    background-color: rgb({_button_hover[0]}, {_button_hover[1]},"
+                                         f" {_button_hover[2]});"
                                          "}")
 
-        self._name.setStyleSheet((f"color: rgb({self._app_name_color[0]}, "
-                                  f"{self._app_name_color[1]}, {self._app_name_color[2]});"))
+        self._mainBody.setStyleSheet(f"background-color: rgb({_main_body_background[0]}, "
+                                     f"{_main_body_background[1]}, {_main_body_background[2]});")
+
+        self._name.setStyleSheet((f"color: rgb({_app_name_color[0]}, "
+                                  f"{_app_name_color[1]}, {_app_name_color[2]});"))
 
         # For Custom UI elements
-        self._main_list.set_stylesheet(self._main_background_color)
-        self._main_list.set_color_for_list_elements(self._app_name_color)
-        self._path_selection_widget.set_text_color(self._app_name_color)
-        self._bar_window.set_text_color(self._app_name_color)
-        self._drag_and_drop_information_window.set_text_color(self._app_name_color)
-
-        # Change icon by current color
-        if get_current_theme_style() == DARK_THEME:
-            self._theme_icon.addPixmap(QtGui.QPixmap(":/newPrefix/ZipPerIcons/icons8-sun-32.png"), Qt.QIcon.Normal,
-                                       Qt.QIcon.Off)
-        else:
-            self._theme_icon.addPixmap(QtGui.QPixmap(":/newPrefix/ZipPerIcons/icons8-moon-32.png"), Qt.QIcon.Normal,
-                                       Qt.QIcon.Off)
+        self._main_list.set_stylesheet(main_background_color)
+        self._main_list.set_color_for_list_elements(_app_name_color)
+        self._path_selection_widget.set_text_color(_app_name_color)
+        self._bar_window.set_text_color(_app_name_color)
+        self._drag_and_drop_information_window.set_text_color(_app_name_color)
+        self._theme_icon.addPixmap(QtGui.QPixmap(_icon_path), Qt.QIcon.Normal,
+                                   Qt.QIcon.Off)
         self._changeTheme.setIcon(self._theme_icon)
-
-    # TODO
-    # def _set_progress_bar_value(self, value: int) -> None:
-    #     self._bar_window.set_progress_value(value)
 
     def _setup_ui(self) -> None:
         self.setObjectName("MainWindow")
