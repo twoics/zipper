@@ -7,10 +7,10 @@ import sys
 from PyQt5 import QtCore
 
 # Local application imports
-from ui.zip_per_ui import UiZipPer
+from ui.main_ui import UiZipPer
 from controller.controller import Controller
-from model.base import BASE_CONTEXT
-from controller.file_convertor import Archiver
+from src.main.python.model.archiver import Archiver
+from src.main.python.base import BASE_CONTEXT
 
 
 class Main:
