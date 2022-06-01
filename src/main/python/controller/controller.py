@@ -13,25 +13,30 @@ from src.main.python.ui.ui_abstract import IView
 from src.main.python.model.abstract_archiver import IArchiver
 from src.main.python.controller.json_connector import JsonConnector
 
-# Operation mode
-CREATE_ZIP_WITH_COMPRESS = 1
-CREATE_ZIP_NOT_COMPRESS = 2
-UNZIP = 3
-
-PERCENT_COUNT = int
-PATH_LIST = List[Path]
-
-# How long the application waits after completing the task to switch to the home screen (ms)
-WAITING_TIME = 1000
-
-DARK = "dark"
-LIGHT = "light"
-
 
 class Controller(QtCore.QObject):
     """This class represents the main logic control controller"""
 
-    def __init__(self, view: IView, model: IArchiver):
+    # Operation mode
+    CREATE_ZIP_WITH_COMPRESS = 1
+    CREATE_ZIP_NOT_COMPRESS = 2
+
+    PATH_LIST = List[Path]
+
+    # How long the application waits after completing
+    # the task to switch to the home screen (ms)
+    WAITING_TIME = 1000
+
+    DARK = "dark"
+    LIGHT = "light"
+
+    def __init__(self, view: IView, model: IArchiver, base_context):
+        """
+        A class connecting logic and UI
+        :param view: UI class
+        :param model: Logic class
+        :param base_context: Application Context (Needed to access the database)
+        """
         super(Controller, self).__init__()
 
         # Init ui and logic
@@ -39,7 +44,7 @@ class Controller(QtCore.QObject):
         self._convertor = model
 
         # Init JSON_Connector
-        self._json_connector = JsonConnector()
+        self._json_connector = JsonConnector(base_context)
 
         # Init main signals from view and logic
         self._start_processing_signal = view.get_processing_signal()
@@ -69,17 +74,17 @@ class Controller(QtCore.QObject):
         :param name: Name of the result folder/archive name
         :return: Send signal when the inverter finishes running
         """
-        if operation_mode == CREATE_ZIP_WITH_COMPRESS:
+        if operation_mode == self.CREATE_ZIP_WITH_COMPRESS:
             self._convertor.zip_convert(file_list, directory, name, compression=True)
-        elif operation_mode == CREATE_ZIP_NOT_COMPRESS:
+        elif operation_mode == self.CREATE_ZIP_NOT_COMPRESS:
             self._convertor.zip_convert(file_list, directory, name, compression=False)
         else:  # UNZIP
             self._convertor.unzip_archives(file_list, directory, name)
-        self._timer.start(WAITING_TIME)
+        self._timer.start(self.WAITING_TIME)
 
     def _change_theme(self):
         current_style = self._json_connector.get_current_style()
-        another_style = DARK if current_style == LIGHT else LIGHT
+        another_style = self.DARK if current_style == self.LIGHT else self.LIGHT
         another_style_colors = self._json_connector.get_colors(style=another_style)
         self._json_connector.set_current_style(another_style)
         self._view.set_theme(another_style_colors)

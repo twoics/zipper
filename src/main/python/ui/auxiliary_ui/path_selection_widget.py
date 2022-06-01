@@ -11,22 +11,23 @@ from PyQt5.QtWidgets import QWidget
 from PyQt5.QtWidgets import QMessageBox
 from PyQt5 import QtCore, QtGui, QtWidgets
 
-COLOR_ARRAY = [int, int, int]
-DIRECTORY = str
-NAME = str
-PATH = Path
-
-EMPTY_FIELD = ""
-
-SET_SYMBOLS_ORD = {33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47,
-                   58, 59, 60, 61, 62, 63, 64, 91, 92, 93, 94, 95, 96, 123, 124, 125, 126}
-INVALID_SYMBOLS = {"<", ">", ":", '"', "/", "\\", "|", "?", "*"}
-
 
 class PathSelectionWidget(QWidget):
     """Widget Class, If all fields are filled without problems, it sends a signal to start working"""
 
-    signal_with_path_and_name = QtCore.pyqtSignal(PATH, NAME)
+    COLOR_ARRAY = [int, int, int]
+    DIRECTORY = str
+    NAME = str
+    PATH = Path
+
+    EMPTY_FIELD = ""
+
+    SET_SYMBOLS_ORD = {33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47,
+                       58, 59, 60, 61, 62, 63, 64, 91, 92, 93, 94, 95, 96, 123, 124, 125, 126}
+    INVALID_SYMBOLS = {"<", ">", ":", '"', "/", "\\", "|", "?", "*"}
+
+    # Signal emit PATH to save result and folder/file NAME
+    _signal_with_path_and_name = QtCore.pyqtSignal(PATH, NAME)
 
     def __init__(self):
         super().__init__()
@@ -46,6 +47,15 @@ class PathSelectionWidget(QWidget):
         self._pushButton_2.clicked.connect(self._emit_signal)
 
         self._setup_ui()
+
+    def get_path_signal(self) -> QtCore.pyqtSignal():
+        """
+        Returns the signal for listening,
+        emitted when the user has selected
+        a directory and a name to save the result
+        :return: Signal for listening
+        """
+        return self._signal_with_path_and_name
 
     def set_text_color(self, color: COLOR_ARRAY) -> None:
         """
@@ -70,6 +80,41 @@ class PathSelectionWidget(QWidget):
 
     def clear_input_filed(self) -> None:
         self._lineEdit.setText("")
+
+    def _get_data_from_all_fields(self) -> Tuple[DIRECTORY, NAME]:
+        return QtWidgets.QFileDialog.getExistingDirectory(), self._lineEdit.text()
+
+    def _check_ui_fields(self) -> bool:
+        """
+        Checks the name and path, if there are no problems returns True otherwise False
+        :return: True or False
+        """
+        if self._result_name is self.EMPTY_FIELD or self._result_dir is self.EMPTY_FIELD:
+            return False
+        if len(self._result_name) == 1 and self._result_name in self.SET_SYMBOLS_ORD:
+            return False
+        # Are there any forbidden characters in the name
+        if set(self._result_name).intersection(self.INVALID_SYMBOLS):
+            return False
+
+        path = Path(self._result_dir)
+        for file in path.iterdir():
+            if file.stem == self._result_name:
+                return False
+        return True
+
+    def _emit_signal(self) -> QtCore.pyqtSignal():
+        """
+        If the fields are filled without problems, then it sends a signal ("signal_to_start_convert") to start working
+        :return: Signal or None
+        """
+        self._result_dir, self._result_name = self._get_data_from_all_fields()
+        self.clear_input_filed()
+        if self._check_ui_fields():
+            self._signal_with_path_and_name.emit(Path(self._result_dir), self._result_name)
+        else:
+            QMessageBox.warning(self, "Invalid path or name",
+                                "You must enter the correct name and specify the correct path")
 
     def _setup_ui(self) -> None:
         """Setting UI"""
@@ -150,38 +195,3 @@ class PathSelectionWidget(QWidget):
         self._information_text.setText(_translate("Form", "Enter what the result will be named"))
         self._label.setText(_translate("Form", "Select the directory to save the result"))
         self._pushButton_2.setText(_translate("Form", "Choose and start"))
-
-    def _get_data_from_all_fields(self) -> Tuple[DIRECTORY, NAME]:
-        return QtWidgets.QFileDialog.getExistingDirectory(), self._lineEdit.text()
-
-    def _check_ui_fields(self) -> bool:
-        """
-        Checks the name and path, if there are no problems returns True otherwise False
-        :return: True or False
-        """
-        if self._result_name is EMPTY_FIELD or self._result_dir is EMPTY_FIELD:
-            return False
-        if len(self._result_name) == 1 and self._result_name in SET_SYMBOLS_ORD:
-            return False
-        # Are there any forbidden characters in the name
-        if set(self._result_name).intersection(INVALID_SYMBOLS):
-            return False
-
-        path = Path(self._result_dir)
-        for file in path.iterdir():
-            if file.stem == self._result_name:
-                return False
-        return True
-
-    def _emit_signal(self) -> QtCore.pyqtSignal():
-        """
-        If the fields are filled without problems, then it sends a signal ("signal_to_start_convert") to start working
-        :return: Signal or None
-        """
-        self._result_dir, self._result_name = self._get_data_from_all_fields()
-        self.clear_input_filed()
-        if self._check_ui_fields():
-            self.signal_with_path_and_name.emit(Path(self._result_dir), self._result_name)
-        else:
-            QMessageBox.warning(self, "Invalid path or name",
-                                "You must enter the correct name and specify the correct path")

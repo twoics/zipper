@@ -6,14 +6,11 @@ import zipfile
 from pathlib import Path
 from typing import List
 
-PATH_LIST = List[Path]
-
 
 class FileHandler:
     """Auxiliary class for the archiver"""
 
-    def __init__(self):
-        pass
+    PATH_LIST = List[Path]
 
     @staticmethod
     def write_in_archive(path_to_file: Path, archive: zipfile.ZipFile, folder_path: Path = None) -> None:

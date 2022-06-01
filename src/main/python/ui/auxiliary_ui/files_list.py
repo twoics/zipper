@@ -11,15 +11,15 @@ from PyQt5.QtWidgets import QWidget, QListWidget, QVBoxLayout, QListWidgetItem
 # Local application imports
 from .custom_list_element import _QCustomQWidget
 
-LIST_COLOR = [int, int, int]
-LIST_PATHS = List[Path]
-
 
 class QList(QWidget):
     """
     The class representing the work of QListWidget, supports the
     drag and drop function, works together with QCustomQWidget
     """
+
+    LIST_COLOR = [int, int, int]
+    LIST_PATHS = List[Path]
 
     def __init__(self):
         super(QList, self).__init__(parent=None)

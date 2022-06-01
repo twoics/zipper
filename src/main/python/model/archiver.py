@@ -13,10 +13,6 @@ from PyQt5 import QtCore
 from .file_handler import FileHandler
 from .abstract_archiver import IArchiver
 
-FOLDER_SUFFIX = ''
-PATH_LIST = List[Path]
-ZIP = ".zip"
-
 
 class ArchiverObjectMeta(type(QtCore.QObject), type(IArchiver)):
     pass
@@ -24,10 +20,16 @@ class ArchiverObjectMeta(type(QtCore.QObject), type(IArchiver)):
 
 class Archiver(QtCore.QObject, IArchiver, metaclass=ArchiverObjectMeta):
     """Class for converting files"""
+    PATH_LIST = List[Path]
+    ZIP = ".zip"
 
-    process_percent = QtCore.pyqtSignal(int)  # Signal with the number of sorted files as a percentage
+    # Signal with the number of sorted files as a percentage
+    _process_percent = QtCore.pyqtSignal(int)
 
     def __init__(self):
+        """
+        Unpacks or archives files
+        """
         super(Archiver, self).__init__()
         self._file_handler = FileHandler()
         self._old = None
@@ -40,7 +42,7 @@ class Archiver(QtCore.QObject, IArchiver, metaclass=ArchiverObjectMeta):
         and emits the percentage of work performed
         :return: Signal for listening
         """
-        return self.process_percent
+        return self._process_percent
 
     def zip_convert(self, path_files_to_convert: PATH_LIST, result_dir: Path, archive_name: str,
                     compression: bool = True) -> None:
@@ -55,7 +57,7 @@ class Archiver(QtCore.QObject, IArchiver, metaclass=ArchiverObjectMeta):
         """
 
         # This is necessary because open expects a str type
-        result_dir = str(Path.joinpath(result_dir, archive_name + ZIP))
+        result_dir = str(Path.joinpath(result_dir, archive_name + self.ZIP))
 
         total_files_size = self._file_handler.get_total_size(path_files_to_convert)
         size_processed_files = 0
@@ -118,4 +120,4 @@ class Archiver(QtCore.QObject, IArchiver, metaclass=ArchiverObjectMeta):
         percent = int(100 * processed / total)
         if percent != self._old:
             self._old = percent
-            self.process_percent.emit(percent)
+            self._process_percent.emit(percent)

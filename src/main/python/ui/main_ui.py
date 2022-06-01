@@ -18,54 +18,6 @@ from .ui_abstract import IView
 # Icons import
 import src.main.python.ui.auxiliary_ui.zip_per_icons
 
-FILES_LIST = List[Path]
-
-DARK_THEME = "dark"
-
-ZIP = ".zip"
-
-# Operation mode
-CREATE_ZIP_WITH_COMPRESS = 1
-CREATE_ZIP_NOT_COMPRESS = 2
-UNZIP = 3
-AVAILABLE_MODES = {CREATE_ZIP_WITH_COMPRESS, CREATE_ZIP_NOT_COMPRESS, UNZIP}
-
-# Main Windows
-OPERATION_MODE_SELECTION_WINDOW = 0
-FILE_OPERATION_WINDOW = 1
-PROGRESS_OF_PROCESSED_FILES_WINDOW = 2
-PATH_SELECTION_WINDOW = 3
-AVAILABLE_WINDOWS = {OPERATION_MODE_SELECTION_WINDOW, FILE_OPERATION_WINDOW,
-                     PROGRESS_OF_PROCESSED_FILES_WINDOW, PATH_SELECTION_WINDOW}
-
-# Windows for working with files
-FILE_LIST_WINDOW = 0
-INFORMATION_WINDOW = 1
-
-# Drag and drop tooltip window
-PROMPT_WINDOW = 1
-
-# Signal types
-LIST_OF_FILES = list
-OPERATION_MODE = int
-DIRECTORY = Path
-NAME = str
-
-INFORMATION_ABOUT_THIS_APP = """What is it?
-This application helps you archive and unarchive files.
-
-How it works:
-1) Choose one of three modes of operation: archiving with 
-Select one of the three operating modes: compression archiving, uncompressed archiving, or unarchiving.
-2) Next, select the files you want to work with, 
-The drag & drop feature is also supported.
-3) Specify the name of the file/folder where the result 
-will be saved, and specify the directory in which 
-it will be saved.
-4) After that, wait for the application to finish its work, 
-After the file is created, the application itself will 
-to the main window. """
-
 
 class WindowViewMeta(type(QMainWindow), type(IView)):
     pass
@@ -73,6 +25,52 @@ class WindowViewMeta(type(QMainWindow), type(IView)):
 
 class UiZipPer(QMainWindow, IView, metaclass=WindowViewMeta):
     """Main UI"""
+    FILES_LIST = List[Path]
+
+    ZIP = ".zip"
+
+    # Operation mode
+    CREATE_ZIP_WITH_COMPRESS = 1
+    CREATE_ZIP_NOT_COMPRESS = 2
+    UNZIP = 3
+    AVAILABLE_MODES = {CREATE_ZIP_WITH_COMPRESS, CREATE_ZIP_NOT_COMPRESS, UNZIP}
+
+    # Main Windows
+    OPERATION_MODE_SELECTION_WINDOW = 0
+    FILE_OPERATION_WINDOW = 1
+    PROGRESS_OF_PROCESSED_FILES_WINDOW = 2
+    PATH_SELECTION_WINDOW = 3
+    AVAILABLE_WINDOWS = {OPERATION_MODE_SELECTION_WINDOW, FILE_OPERATION_WINDOW,
+                         PROGRESS_OF_PROCESSED_FILES_WINDOW, PATH_SELECTION_WINDOW}
+
+    # Windows for working with files
+    FILE_LIST_WINDOW = 0
+    INFORMATION_WINDOW = 1
+
+    # Drag and drop tooltip window
+    PROMPT_WINDOW = 1
+
+    # Signal types
+    LIST_OF_FILES = list
+    OPERATION_MODE = int
+    DIRECTORY = Path
+    NAME = str
+
+    INFORMATION_ABOUT_THIS_APP = """What is it?
+    This application helps you archive and unarchive files.
+
+    How it works:
+    1) Choose one of three modes of operation: archiving with 
+    Select one of the three operating modes: compression archiving, uncompressed archiving, or unarchiving.
+    2) Next, select the files you want to work with, 
+    The drag & drop feature is also supported.
+    3) Specify the name of the file/folder where the result 
+    will be saved, and specify the directory in which 
+    it will be saved.
+    4) After that, wait for the application to finish its work, 
+    After the file is created, the application itself will 
+    to the main window. """
+
     # This signal is used to start file processing
     _start_processing_signal = QtCore.pyqtSignal(LIST_OF_FILES, OPERATION_MODE, DIRECTORY, NAME)
 
@@ -80,6 +78,9 @@ class UiZipPer(QMainWindow, IView, metaclass=WindowViewMeta):
     _set_another_theme_signal = QtCore.pyqtSignal()
 
     def __init__(self):
+        """
+        The class that implements the UI
+        """
         QMainWindow.__init__(self, parent=None)
 
         self._operating_mode = None
@@ -132,6 +133,8 @@ class UiZipPer(QMainWindow, IView, metaclass=WindowViewMeta):
         self._next_button = QtWidgets.QPushButton(self._bottom)
         self._del_file_button = QtWidgets.QPushButton(self._bottom)
 
+        self._path_signal = self._path_selection_widget.get_path_signal()
+        self._drag_and_drop_signal = self._drag_and_drop_information_window.get_drag_drop_signal()
         self._init_slots()
         self._setup_ui()
 
@@ -163,8 +166,8 @@ class UiZipPer(QMainWindow, IView, metaclass=WindowViewMeta):
         :return: None
         """
         self._clear_all_fields()
-        self._windows_for_working_with_files.setCurrentIndex(INFORMATION_WINDOW)
-        self._open_window(OPERATION_MODE_SELECTION_WINDOW)
+        self._windows_for_working_with_files.setCurrentIndex(self.INFORMATION_WINDOW)
+        self._open_window(self.OPERATION_MODE_SELECTION_WINDOW)
         self._bar_window.set_progress_value(0)
 
     def set_theme(self, color_dict: dict) -> None:
@@ -207,10 +210,10 @@ class UiZipPer(QMainWindow, IView, metaclass=WindowViewMeta):
         Clears all fields, and opens the start page
         :return: None
         """
-        if self._main_windows.currentIndex() != PROGRESS_OF_PROCESSED_FILES_WINDOW:
+        if self._main_windows.currentIndex() != self.PROGRESS_OF_PROCESSED_FILES_WINDOW:
             self._clear_all_fields()
-            self._windows_for_working_with_files.setCurrentIndex(INFORMATION_WINDOW)
-            self._open_window(OPERATION_MODE_SELECTION_WINDOW)
+            self._windows_for_working_with_files.setCurrentIndex(self.INFORMATION_WINDOW)
+            self._open_window(self.OPERATION_MODE_SELECTION_WINDOW)
 
     @QtCore.pyqtSlot()
     def _show_app_info(self) -> None:
@@ -219,7 +222,7 @@ class UiZipPer(QMainWindow, IView, metaclass=WindowViewMeta):
         a description of the application
         :return: None
         """
-        QMessageBox.warning(self, "What is it", INFORMATION_ABOUT_THIS_APP)
+        QMessageBox.warning(self, "What is it", self.INFORMATION_ABOUT_THIS_APP)
 
     @QtCore.pyqtSlot()
     def _maximize_or_restore(self) -> None:
@@ -251,7 +254,7 @@ class UiZipPer(QMainWindow, IView, metaclass=WindowViewMeta):
         :param name: Name of result file or folder
         :return: None
         """
-        self._open_window(PROGRESS_OF_PROCESSED_FILES_WINDOW)
+        self._open_window(self.PROGRESS_OF_PROCESSED_FILES_WINDOW)
         files_list = self._main_list.get_files_path()
 
         # Start file processing
@@ -278,7 +281,7 @@ class UiZipPer(QMainWindow, IView, metaclass=WindowViewMeta):
                                 f"Only .ZIP files are available for unpacking")
             return
 
-        self._open_window(PATH_SELECTION_WINDOW)
+        self._open_window(self.PATH_SELECTION_WINDOW)
 
     @QtCore.pyqtSlot(int)
     def _set_processing_mode(self, mode: int) -> None:
@@ -288,11 +291,11 @@ class UiZipPer(QMainWindow, IView, metaclass=WindowViewMeta):
         :param mode: Method of working with files
         :return: None
         """
-        if mode not in AVAILABLE_MODES:
+        if mode not in self.AVAILABLE_MODES:
             raise ValueError(f"{mode} not in available modes")
 
         self._operating_mode = mode
-        self._open_window(FILE_OPERATION_WINDOW)
+        self._open_window(self.FILE_OPERATION_WINDOW)
 
     @QtCore.pyqtSlot()
     def _open_files_window(self) -> None:
@@ -301,7 +304,7 @@ class UiZipPer(QMainWindow, IView, metaclass=WindowViewMeta):
         the files he wants to work with
         :return: None
         """
-        self._windows_for_working_with_files.setCurrentIndex(FILE_LIST_WINDOW)
+        self._windows_for_working_with_files.setCurrentIndex(self.FILE_LIST_WINDOW)
 
     @QtCore.pyqtSlot(QtGui.QMouseEvent)
     def _move_window(self, event: QtGui.QMouseEvent) -> None:
@@ -325,7 +328,7 @@ class UiZipPer(QMainWindow, IView, metaclass=WindowViewMeta):
         self._main_list.add_file(file_path)
 
         # If a prompt window is open, change it to the file window
-        if self._windows_for_working_with_files.currentIndex() == PROMPT_WINDOW:
+        if self._windows_for_working_with_files.currentIndex() == self.PROMPT_WINDOW:
             self._open_files_window()
 
     def _check_before_unpacking(self, files_list: FILES_LIST) -> bool:
@@ -334,9 +337,9 @@ class UiZipPer(QMainWindow, IView, metaclass=WindowViewMeta):
         :param files_list: List with files
         :return: Is all files .ZIP format if unpacking mode is selected
         """
-        if self._operating_mode == UNZIP:
+        if self._operating_mode == self.UNZIP:
             for file in files_list:
-                if file.suffix != ZIP:
+                if file.suffix != self.ZIP:
                     return False
         return True
 
@@ -346,7 +349,7 @@ class UiZipPer(QMainWindow, IView, metaclass=WindowViewMeta):
         :param window_index: Index of the window to be opened
         :return: None
         """
-        if window_index not in AVAILABLE_WINDOWS:
+        if window_index not in self.AVAILABLE_WINDOWS:
             raise ValueError(f"{window_index} index not in available window indexes")
         self._main_windows.setCurrentIndex(window_index)
 
@@ -375,11 +378,11 @@ class UiZipPer(QMainWindow, IView, metaclass=WindowViewMeta):
 
     def _logic_slots(self) -> None:
         #  When received, all necessary data is collected and sent to the signal start processing
-        self._path_selection_widget.signal_with_path_and_name.connect(self._emit_signal_to_start_conversion)
+        self._path_signal.connect(self._emit_signal_to_start_conversion)
 
     def _ui_slots(self) -> None:
         # When user drags files, remove prompt window and show the file window
-        self._drag_and_drop_information_window.on_dragging.connect(self._open_files_window)
+        self._drag_and_drop_signal.connect(self._open_files_window)
 
         # Top right buttons
         self._closeButton.clicked.connect(lambda: self.close())
@@ -388,11 +391,11 @@ class UiZipPer(QMainWindow, IView, metaclass=WindowViewMeta):
 
         # Opens the page and notify about change status
         self._create_zip_with_compress_button.clicked.connect(
-            lambda: self._set_processing_mode(CREATE_ZIP_WITH_COMPRESS))
+            lambda: self._set_processing_mode(self.CREATE_ZIP_WITH_COMPRESS))
         self._create_zip_not_compress_button.clicked.connect(
-            lambda: self._set_processing_mode(CREATE_ZIP_NOT_COMPRESS))
+            lambda: self._set_processing_mode(self.CREATE_ZIP_NOT_COMPRESS))
         self._unpack_zip_button.clicked.connect(
-            lambda: self._set_processing_mode(UNZIP))
+            lambda: self._set_processing_mode(self.UNZIP))
 
         # Delete and add file buttons
         self._add_file_button.clicked.connect(
@@ -669,7 +672,7 @@ class UiZipPer(QMainWindow, IView, metaclass=WindowViewMeta):
         self._main_list.setObjectName("main_page")
         self._windows_for_working_with_files.addWidget(self._main_list)
         self._windows_for_working_with_files.addWidget(self._drag_and_drop_information_window)
-        self._windows_for_working_with_files.setCurrentIndex(INFORMATION_WINDOW)
+        self._windows_for_working_with_files.setCurrentIndex(self.INFORMATION_WINDOW)
         self._verticalLayout_2.addWidget(self._windows_for_working_with_files)
         self._bottom.setMinimumSize(QtCore.QSize(0, 80))
         self._bottom.setMaximumSize(QtCore.QSize(16777215, 80))
@@ -717,7 +720,7 @@ class UiZipPer(QMainWindow, IView, metaclass=WindowViewMeta):
         self.setCentralWidget(self._central_widget)
 
         self._translate_ui()
-        self._open_window(OPERATION_MODE_SELECTION_WINDOW)
+        self._open_window(self.OPERATION_MODE_SELECTION_WINDOW)
         QtCore.QMetaObject.connectSlotsByName(self)
 
     def _translate_ui(self) -> None:
