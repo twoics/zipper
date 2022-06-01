@@ -9,9 +9,9 @@ from PyQt5 import QtCore
 from PyQt5.QtCore import QTimer
 
 # Local application imports
-from src.main.python.ui.ui_abstract import IView
-from src.main.python.model.abstract_archiver import IArchiver
-from src.main.python.controller.json_connector import JsonConnector
+from ui.ui_abstract import IView
+from model.abstract_archiver import IArchiver
+from controller.json_connector import JsonConnector
 
 
 class Controller(QtCore.QObject):

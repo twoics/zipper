@@ -2,6 +2,7 @@
 The module implements the interface of interaction with the UI
 """
 
+# Standard library imports
 from abc import ABC, abstractmethod
 from PyQt5 import QtCore
 from pathlib import Path

@@ -12,11 +12,12 @@ from PyQt5 import Qt, QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QFileDialog, QMessageBox
 
 # Local application imports
-from src.main.python.ui.auxiliary_ui.files_list import QList
-from src.main.python.ui.auxiliary_ui.information_window import HintPage
-from src.main.python.ui.auxiliary_ui.progress_bar_ui import ProgressBarWindow
-from src.main.python.ui.auxiliary_ui.path_selection_widget import PathSelectionWidget
+from .auxiliary_ui.files_list import QList
+from .auxiliary_ui.information_window import HintPage
+from .auxiliary_ui.progress_bar_ui import ProgressBarWindow
+from .auxiliary_ui.path_selection_widget import PathSelectionWidget
 from .ui_abstract import IView
+
 # Icons import
 import src.main.python.ui.auxiliary_ui.zip_per_icons
 
