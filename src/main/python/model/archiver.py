@@ -11,20 +11,38 @@ from PyQt5 import QtCore
 
 # Local application imports
 from .file_handler import FileHandler
-
-FOLDER_SUFFIX = ''
-PATH_LIST = List[Path]
-ZIP = ".zip"
+from .abstract_archiver import IArchiver
 
 
-class Archiver(QtCore.QObject):
+class ArchiverObjectMeta(type(QtCore.QObject), type(IArchiver)):
+    pass
+
+
+class Archiver(QtCore.QObject, IArchiver, metaclass=ArchiverObjectMeta):
     """Class for converting files"""
+    PATH_LIST = List[Path]
+    ZIP = ".zip"
 
-    process_percent = QtCore.pyqtSignal(int)  # Signal with the number of sorted files as a percentage
+    # Signal with the number of sorted files as a percentage
+    _process_percent = QtCore.pyqtSignal(int)
 
     def __init__(self):
+        """
+        Unpacks or archives files
+        """
         super(Archiver, self).__init__()
         self._file_handler = FileHandler()
+        self._old = None
+
+    def get_process_signal(self) -> QtCore.pyqtSignal():
+        """
+        Returns the signal for listening.
+        The signal is emitted during
+        the operation of the archiver,
+        and emits the percentage of work performed
+        :return: Signal for listening
+        """
+        return self._process_percent
 
     def zip_convert(self, path_files_to_convert: PATH_LIST, result_dir: Path, archive_name: str,
                     compression: bool = True) -> None:
@@ -39,7 +57,7 @@ class Archiver(QtCore.QObject):
         """
 
         # This is necessary because open expects a str type
-        result_dir = str(Path.joinpath(result_dir, archive_name + ZIP))
+        result_dir = str(Path.joinpath(result_dir, archive_name + self.ZIP))
 
         total_files_size = self._file_handler.get_total_size(path_files_to_convert)
         size_processed_files = 0
@@ -99,11 +117,7 @@ class Archiver(QtCore.QObject):
         :param total: Total files or size
         :return: Emit signal
         """
-        percent = 100 * processed / total
-        # TODO FIX THIS
-
-        # Since calculations often produce floating point numbers and rounding produces
-        # an integer that has already been sent by the signal, I do this check to avoid unnecessary signals
-
-        # if round(percent) == int(percent) and percent % 1 > 5:
-        #     self.process_percent.emit(percent)
+        percent = int(100 * processed / total)
+        if percent != self._old:
+            self._old = percent
+            self._process_percent.emit(percent)

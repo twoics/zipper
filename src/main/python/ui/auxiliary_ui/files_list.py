@@ -11,16 +11,15 @@ from PyQt5.QtWidgets import QWidget, QListWidget, QVBoxLayout, QListWidgetItem
 # Local application imports
 from .custom_list_element import _QCustomQWidget
 
-LIST_COLOR = [int, int, int]
-LIST_PATHS = List[Path]
-
 
 class QList(QWidget):
     """
     The class representing the work of QListWidget, supports the
     drag and drop function, works together with QCustomQWidget
     """
-    added_file = QtCore.pyqtSignal()
+
+    LIST_COLOR = [int, int, int]
+    LIST_PATHS = List[Path]
 
     def __init__(self):
         super(QList, self).__init__(parent=None)
@@ -42,12 +41,12 @@ class QList(QWidget):
         """
         return self._data_list
 
-    def add_file(self, path_to_file: str) -> Union[QtCore.pyqtSignal(), None]:
+    def add_file(self, path_to_file: str) -> None:
         """
         Add file into files list
         If the file was added successfully sends a signal, if the file was not added, it returns None
         :param path_to_file: Path to the file to add
-        :return: Sends the "added_file" signal if the file was successfully added, otherwise nothing
+        :return: None
         """
         if not path_to_file:
             return
@@ -65,8 +64,6 @@ class QList(QWidget):
 
         self._list_widget.addItem(list_item)
         self._list_widget.setItemWidget(list_item, custom_widget)
-
-        self.added_file.emit()
 
     def delete_file(self) -> None:
         """
@@ -104,13 +101,13 @@ class QList(QWidget):
         """
         self._color_for_list_elements = color_for_list_items
 
-    def dragEnterEvent(self, event):
+    def dragEnterEvent(self, event) -> None:
         if event.mimeData().hasUrls():
             event.accept()
         else:
             event.ignore()
 
-    def dropEvent(self, event):
+    def dropEvent(self, event) -> None:
         files = [u.toLocalFile() for u in event.mimeData().urls()]
         for f in files:
             self.add_file(f)

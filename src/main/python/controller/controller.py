@@ -6,32 +6,66 @@ from pathlib import Path
 
 # Third party imports
 from PyQt5 import QtCore
+from PyQt5.QtCore import QTimer
 
 # Local application imports
-from .file_convertor import Archiver
-
-# Operation mode
-CREATE_ZIP_WITH_COMPRESS = 1
-CREATE_ZIP_NOT_COMPRESS = 2
-UNZIP = 3
-
-PERCENT_COUNT = int
-PATH_LIST = List[Path]
+from src.main.python.ui.ui_abstract import IView
+from src.main.python.model.abstract_archiver import IArchiver
+from src.main.python.controller.json_connector import JsonConnector
 
 
 class Controller(QtCore.QObject):
     """This class represents the main logic control controller"""
-    # A signal is sent to the main when the converter finishes running
-    finished = QtCore.pyqtSignal()
-    # A signal is sent to the UI during work each time the amount of work done has been updated.
-    percent_count = QtCore.pyqtSignal(PERCENT_COUNT)
 
-    def __init__(self):
+    # Operation mode
+    CREATE_ZIP_WITH_COMPRESS = 1
+    CREATE_ZIP_NOT_COMPRESS = 2
+
+    PATH_LIST = List[Path]
+
+    # How long the application waits after completing
+    # the task to switch to the home screen (ms)
+    WAITING_TIME = 1000
+
+    DARK = "dark"
+    LIGHT = "light"
+
+    def __init__(self, view: IView, model: IArchiver, base_context):
+        """
+        A class connecting logic and UI
+        :param view: UI class
+        :param model: Logic class
+        :param base_context: Application Context (Needed to access the database)
+        """
         super(Controller, self).__init__()
-        self._convertor = Archiver()
+
+        # Init ui and logic
+        self._view = view
+        self._convertor = model
+
+        # Init JSON_Connector
+        self._json_connector = JsonConnector(base_context)
+
+        # Init main signals from view and logic
+        self._start_processing_signal = view.get_processing_signal()
+        self._process_signal = model.get_process_signal()
+
+        # Signal to change theme
+        self._change_theme_signal = view.get_change_theme_signal()
+
+        # A timer that starts when the files processing is finished,
+        # when it expires, the main application window will open
+        self._timer = QTimer()
+
+        # Setting colors for launching the UI
+        current_style = self._json_connector.get_current_style()
+        current_colors = self._json_connector.get_colors(style=current_style)
+        self._view.set_theme(current_colors)
+
+        # Initialize slots for signals
         self._init_slots()
 
-    def run(self, file_list: PATH_LIST, operation_mode: int, directory: Path, name: str) -> QtCore.pyqtSignal():
+    def run(self, file_list: PATH_LIST, operation_mode: int, directory: Path, name: str) -> None:
         """
         Method that is executed in another thread, converting files
         :param file_list: List of file paths
@@ -40,17 +74,40 @@ class Controller(QtCore.QObject):
         :param name: Name of the result folder/archive name
         :return: Send signal when the inverter finishes running
         """
-        if operation_mode == CREATE_ZIP_WITH_COMPRESS:
+        if operation_mode == self.CREATE_ZIP_WITH_COMPRESS:
             self._convertor.zip_convert(file_list, directory, name, compression=True)
-        elif operation_mode == CREATE_ZIP_NOT_COMPRESS:
+        elif operation_mode == self.CREATE_ZIP_NOT_COMPRESS:
             self._convertor.zip_convert(file_list, directory, name, compression=False)
         else:  # UNZIP
             self._convertor.unzip_archives(file_list, directory, name)
-        self.finished.emit()
+        self._timer.start(self.WAITING_TIME)
+
+    def _change_theme(self):
+        current_style = self._json_connector.get_current_style()
+        another_style = self.DARK if current_style == self.LIGHT else self.LIGHT
+        another_style_colors = self._json_connector.get_colors(style=another_style)
+        self._json_connector.set_current_style(another_style)
+        self._view.set_theme(another_style_colors)
+
+    def _reset_all(self) -> None:
+        """
+        Resets the UI, clearing the
+        fields and returns the start page
+        :return: None
+        """
+        self._view.reset_ui()
+        self._timer.stop()
 
     def _init_slots(self) -> None:
-        # When convertor send signal, send a "percent_count" signal
-        self._convertor.process_percent.connect(self._emit_count_percent)
+        """
+        Initializing signal slots
+        :return: None
+        """
+        self._process_signal.connect(self._view.set_progress_value)
 
-    def _emit_count_percent(self, percent) -> QtCore.pyqtSignal():
-        self.percent_count.emit(percent)
+        self._start_processing_signal.connect(self.run)
+
+        self._change_theme_signal.connect(self._change_theme)
+
+        # When the timer expires, reset everything and open the main window
+        self._timer.timeout.connect(self._reset_all)

@@ -5,12 +5,12 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QWidget
 from PyQt5 import QtCore, QtGui, QtWidgets
 
-COLOR_ARRAY = [int, int, int]
-
 
 class ProgressBarWindow(QWidget):
     """Bar progress class, sets the bar progress value
     from the main UI module, which receives the value from the controller module signal"""
+
+    COLOR_ARRAY = [int, int, int]
 
     def __init__(self):
         super().__init__()

@@ -5,8 +5,6 @@ from PyQt5 import Qt
 from PyQt5.QtWidgets import QWidget
 from PyQt5 import QtCore, QtGui, QtWidgets
 
-COLOR_ARRAY = [int, int, int]
-
 
 class HintPage(QWidget):
     """
@@ -14,7 +12,10 @@ class HintPage(QWidget):
     this class sends a signal to change the window to set the main window
     """
 
-    on_dragging = QtCore.pyqtSignal()
+    COLOR_ARRAY = [int, int, int]
+
+    # Signal emit when drag and drop happens
+    _on_dragging = QtCore.pyqtSignal()
 
     def __init__(self):
         super(HintPage, self).__init__(parent=None)
@@ -37,8 +38,16 @@ class HintPage(QWidget):
         self._text_helper.setStyleSheet(f'''
                 color: rgb({red}, {green}, {blue});''')
 
+    def get_drag_drop_signal(self) -> QtCore.pyqtSignal():
+        """
+        Returns the signal to listening that
+        is emitted when the user does drag and drop
+        :return: Signal for listening
+        """
+        return self._on_dragging
+
     def dragEnterEvent(self, event):
-        self.on_dragging.emit()
+        self._on_dragging.emit()
 
     def _setup_ui(self) -> None:
         self.setAcceptDrops(True)

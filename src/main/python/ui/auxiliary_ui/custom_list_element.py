@@ -8,14 +8,13 @@ from PyQt5 import QtCore
 from PyQt5.QtCore import QSize
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QLabel, QFileIconProvider
 
-COLOR_ARRAY = [int, int, int]
-
 
 class _QCustomQWidget(QWidget):
     """
     Class of custom element QListWidget, has an icon and text, icon and text, the icon is selected from the system
     for a specific file type, you can set the color of the text
     """
+    COLOR_ARRAY = [int, int, int]
 
     def __init__(self, txt_color: COLOR_ARRAY = None):
         """
