@@ -1,7 +1,13 @@
+"""
+The module implements the interface of work with the archiver
+"""
+# Standard library imports
 from typing import List
 from pathlib import Path
-from PyQt5 import QtCore
 from abc import ABC, abstractmethod
+
+# Third party imports
+from PyQt5 import QtCore
 
 PATH_LIST = List[Path]
 

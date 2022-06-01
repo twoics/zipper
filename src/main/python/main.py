@@ -9,7 +9,7 @@ from PyQt5 import QtCore
 # Local application imports
 from ui.main_ui import UiZipPer
 from controller.controller import Controller
-from src.main.python.model.archiver import Archiver
+from model.archiver import Archiver
 from fbs_runtime.application_context.PyQt5 import ApplicationContext
 
 BASE_CONTEXT = ApplicationContext()
