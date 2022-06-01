@@ -1,4 +1,6 @@
-"""A module that implements a class with static methods of working with a file"""
+"""
+A module that implements a class with static methods of working with a file
+"""
 
 # Standard library imports
 import os

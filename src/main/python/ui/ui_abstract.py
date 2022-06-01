@@ -1,9 +1,5 @@
 """
-This module implements an abstract UI class,
-but in it I don't set its behavior,
-could say it's an interface.
-In what follows I will use the notion of interface,
-for abstract classes of this type
+The module implements the interface of interaction with the UI
 """
 
 from abc import ABC, abstractmethod

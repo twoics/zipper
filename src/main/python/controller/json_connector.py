@@ -1,3 +1,7 @@
+"""
+The module implements the getting and setting of data in the database
+"""
+
 # Standard library imports
 import json
 

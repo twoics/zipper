@@ -1,4 +1,6 @@
-"""This module is the UI of the application, all the main widgets are located here."""
+"""
+This module is the UI of the application, all the main widgets are located here.
+"""
 
 # Standard library imports
 from typing import List

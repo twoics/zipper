@@ -1,3 +1,7 @@
+"""
+The module implements the interface of work with the archiver
+"""
+
 from typing import List
 from pathlib import Path
 from PyQt5 import QtCore
