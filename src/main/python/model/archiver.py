@@ -32,7 +32,7 @@ class Archiver(QtCore.QObject, IArchiver, metaclass=ArchiverObjectMeta):
         """
         super(Archiver, self).__init__()
         self._file_handler = FileHandler()
-        self._old = None
+        self._old_emitted_percent = None
 
     def get_process_signal(self) -> QtCore.pyqtSignal():
         """
@@ -118,6 +118,8 @@ class Archiver(QtCore.QObject, IArchiver, metaclass=ArchiverObjectMeta):
         :return: Emit signal
         """
         percent = int(100 * processed / total)
-        if percent != self._old:
-            self._old = percent
+        # This is done for not to overload the controller
+        # by signals (not to send the same value many times).
+        if percent != self._old_emitted_percent:
+            self._old_emitted_percent = percent
             self._process_percent.emit(percent)
